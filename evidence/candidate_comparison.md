@@ -4,7 +4,7 @@
 
 | 原则 | 说明 |
 |------|------|
-| P1 真实 Agent/Skill | 不是自己为了 benchmark 编一套假 Skill，应来自已有开源视频 Agent 生态 |
+| P1 真实能力来源 + 可审计 Skill | 核心业务能力必须来自真实公开系统/Agent/Skill；benchmark 可以根据跨项目共性编写 orchestration Skill，但必须记录能力来源及映射关系，不得自行重新实现核心视频算法 |
 | P2 覆盖同类共性操作 | 实现应能覆盖前述共性链路中的主要步骤，而不是只能完成单一 API 调用 |
 | P3 能够冻结 | 必须能够固定源码 commit、Skill 内容、依赖和模型/provider 配置 |
 | P4 适合基准环境运行 | 本地执行环境应可以 CPU-only；高成本生成模型允许通过外部 API 使用 |

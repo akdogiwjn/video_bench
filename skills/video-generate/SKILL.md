@@ -5,7 +5,8 @@ license: MIT
 metadata:
   source: "https://github.com/HITsz-TMG/VideoClaw"
   commit: "1324b36"
-  upstream_skill: true
+  skill_type: benchmark-adapted
+  adaptation: "Removed human stop points for unattended benchmark. Reorganized into API capabilities. Underlying VideoClaw capability unchanged."
   version: "1.0"
 ---
 

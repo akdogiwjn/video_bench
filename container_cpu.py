@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Container CPU monitor via cgroup. Samples CPU usage for a named Docker container."""
+"""Container CPU monitor via cgroup. Uses /proc/PID/cgroup for robust path detection."""
 from __future__ import annotations
 
 import argparse
@@ -11,29 +11,42 @@ import time
 from pathlib import Path
 
 
-def get_container_cgroup_path(container_name: str) -> str | None:
+def get_container_pid(container_name: str) -> int | None:
     result = subprocess.run(
-        ["docker", "inspect", "--format", "{{.Id}}", container_name],
+        ["docker", "inspect", "--format", "{{.State.Pid}}", container_name],
         capture_output=True, text=True,
     )
-    if result.returncode != 0 or not result.stdout.strip():
+    if result.returncode != 0:
         return None
-    container_id = result.stdout.strip()
-    for base in ["/sys/fs/cgroup", "/sys/fs/cgroup/docker"]:
-        path = f"{base}/{container_id}"
-        if os.path.exists(path):
-            return path
-        path = f"{base}/docker/{container_id}"
-        if os.path.exists(path):
-            return path
-    short_id = container_id[:12]
-    for base in ["/sys/fs/cgroup", "/sys/fs/cgroup/docker"]:
-        path = f"{base}/{short_id}"
-        if os.path.exists(path):
-            return path
-        path = f"{base}/docker/{short_id}"
-        if os.path.exists(path):
-            return path
+    try:
+        return int(result.stdout.strip())
+    except ValueError:
+        return None
+
+
+def get_cgroup_path_from_pid(pid: int) -> str | None:
+    """Read /proc/<PID>/cgroup to find the real cgroup path."""
+    cgroup_file = f"/proc/{pid}/cgroup"
+    if not os.path.exists(cgroup_file):
+        return None
+    try:
+        with open(cgroup_file) as f:
+            for line in f:
+                # Format: hierarchy_id:controller:path  or  0::/path (cgroup v2)
+                parts = line.strip().split(":")
+                if len(parts) == 3:
+                    path = parts[2].strip()
+                    # Check for cpu v2 path or v1 cpu path
+                    if "cpu" in parts[1] or parts[1] == "":
+                        full_path = f"/sys/fs/cgroup{path}"
+                        if os.path.exists(os.path.join(full_path, "cpu.stat")):
+                            return full_path
+                        # Try v1 style
+                        full_path = f"/sys/fs/cgroup/cpu{path}"
+                        if os.path.exists(os.path.join(full_path, "cpu.stat")):
+                            return full_path
+    except (OSError, IndexError):
+        pass
     return None
 
 
@@ -65,9 +78,7 @@ def main():
 
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-
     csv_path = output_dir / "container_cpu_samples.csv"
-    log_path = output_dir / "container_cpu.log"
 
     with open(csv_path, "w", newline="") as f:
         writer = csv.writer(f)
@@ -76,36 +87,30 @@ def main():
     prev_usage = 0
     prev_time = time.time()
     cgroup_path = None
+    pid = None
 
-    with open(log_path, "w") as log:
-        log.write(f"started_at={time.strftime('%Y-%m-%dT%H:%M:%S')}\n")
-        log.write(f"container_name={args.container_name}\n")
-        log.write(f"interval={args.interval}\n")
-
-        while True:
+    while True:
+        if cgroup_path is None:
+            pid = get_container_pid(args.container_name)
+            if pid and pid > 0:
+                cgroup_path = get_cgroup_path_from_pid(pid)
             if cgroup_path is None:
-                cgroup_path = get_container_cgroup_path(args.container_name)
-                if cgroup_path is None:
-                    time.sleep(args.interval)
-                    continue
+                time.sleep(args.interval)
+                continue
 
-            now = time.time()
-            cpu = read_cgroup_cpu(cgroup_path)
-            delta = cpu["usage_usec"] - prev_usage
-            elapsed = now - prev_time
-            cpu_percent = (delta / 1_000_000) / elapsed * 100 if elapsed > 0 and prev_usage > 0 else 0
+        now = time.time()
+        cpu = read_cgroup_cpu(cgroup_path)
+        delta = cpu["usage_usec"] - prev_usage
+        elapsed = now - prev_time
+        cpu_percent = (delta / 1_000_000) / elapsed * 100 if elapsed > 0 and prev_usage > 0 else 0
 
-            with open(csv_path, "a", newline="") as f:
-                writer = csv.writer(f)
-                writer.writerow([
-                    f"{now:.6f}",
-                    cpu["usage_usec"], cpu["user_usec"], cpu["system_usec"],
-                    delta, f"{cpu_percent:.2f}",
-                ])
+        with open(csv_path, "a", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow([f"{now:.6f}", cpu["usage_usec"], cpu["user_usec"], cpu["system_usec"], delta, f"{cpu_percent:.2f}"])
 
-            prev_usage = cpu["usage_usec"]
-            prev_time = now
-            time.sleep(args.interval)
+        prev_usage = cpu["usage_usec"]
+        prev_time = now
+        time.sleep(args.interval)
 
 
 if __name__ == "__main__":

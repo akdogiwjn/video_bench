@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Summarize a video benchmark run: parse task_window, compute metrics, generate summary JSON."""
+"""Summarize a video benchmark run: filter resource samples by task_window, compute metrics."""
 from __future__ import annotations
 
-import argparse
 import csv
 import json
 import sys
@@ -23,51 +22,91 @@ def safe_read_float(path: Path) -> float | None:
         return None
 
 
-def compute_cpu_summary(csv_path: Path) -> dict:
+def parse_docker_bytes(s: str) -> float:
+    """Parse Docker stats byte strings: supports B/kB/KB/MB/GB/KiB/MiB/GiB."""
+    if not s:
+        return 0.0
+    s = s.strip()
+    units = [
+        ("TiB", 1024**4), ("GiB", 1024**3), ("MiB", 1024**2), ("KiB", 1024),
+        ("TB", 1e12), ("GB", 1e9), ("MB", 1e6), ("kB", 1e3), ("KB", 1e3),
+        ("B", 1.0),
+    ]
+    for suffix, multiplier in units:
+        if s.endswith(suffix):
+            try:
+                return float(s[:-len(suffix)].strip()) * multiplier
+            except ValueError:
+                return 0.0
+    try:
+        return float(s)
+    except ValueError:
+        return 0.0
+
+
+def filter_samples_by_window(csv_path: Path, window: dict | None) -> list[dict]:
+    """Read CSV samples and keep only those within task_window."""
     if not csv_path.exists():
-        return {}
+        return []
     rows = []
     with open(csv_path) as f:
         for row in csv.DictReader(f):
             rows.append(row)
     if not rows:
-        return {}
-    cpu_percentages = [float(r.get("cpu_percent", 0)) for r in rows if r.get("cpu_percent")]
-    usage_values = [int(r.get("usage_usec", 0)) for r in rows if r.get("usage_usec")]
+        return []
+    if window is None:
+        return rows
+    start = window.get("start_epoch")
+    end = window.get("end_epoch")
+    if start is None or end is None:
+        return rows
+    filtered = []
+    for row in rows:
+        ts = float(row.get("timestamp", 0))
+        if start <= ts <= end:
+            filtered.append(row)
+    return filtered if filtered else rows
+
+
+def compute_cpu_summary(csv_path: Path, window: dict | None) -> dict:
+    rows = filter_samples_by_window(csv_path, window)
+    if not rows:
+        return {"sample_count": 0}
+    cpu_pcts = [float(r.get("cpu_percent", 0)) for r in rows if r.get("cpu_percent")]
+    usage_vals = [int(r.get("usage_usec", 0)) for r in rows if r.get("usage_usec")]
+    total_cpu_time = 0
+    if len(usage_vals) >= 2:
+        total_cpu_time = (usage_vals[-1] - usage_vals[0]) / 1_000_000
     return {
         "sample_count": len(rows),
-        "avg_cpu_percent": sum(cpu_percentages) / len(cpu_percentages) if cpu_percentages else 0,
-        "max_cpu_percent": max(cpu_percentages) if cpu_percentages else 0,
-        "total_cpu_time_seconds": (usage_values[-1] - usage_values[0]) / 1_000_000 if len(usage_values) >= 2 else 0,
+        "task_avg_cpu_percent": round(sum(cpu_pcts) / len(cpu_pcts), 2) if cpu_pcts else 0,
+        "task_max_cpu_percent": round(max(cpu_pcts), 2) if cpu_pcts else 0,
+        "task_cpu_time_seconds": round(total_cpu_time, 3),
     }
 
 
-def compute_resource_summary(csv_path: Path) -> dict:
-    if not csv_path.exists():
-        return {}
-    rows = []
-    with open(csv_path) as f:
-        for row in csv.DictReader(f):
-            rows.append(row)
+def compute_resource_summary(csv_path: Path, window: dict | None) -> dict:
+    rows = filter_samples_by_window(csv_path, window)
     if not rows:
-        return {}
-    mem_values = [float(r.get("mem_usage_bytes", 0)) for r in rows if r.get("mem_usage_bytes")]
-    net_in_values = [float(r.get("net_input_bytes", 0)) for r in rows if r.get("net_input_bytes")]
-    net_out_values = [float(r.get("net_output_bytes", 0)) for r in rows if r.get("net_output_bytes")]
-    blk_read_values = [float(r.get("block_read_bytes", 0)) for r in rows if r.get("block_read_bytes")]
-    blk_write_values = [float(r.get("block_write_bytes", 0)) for r in rows if r.get("block_write_bytes")]
+        return {"sample_count": 0}
+    mem_vals = [parse_docker_bytes(r.get("mem_usage_bytes", "0")) for r in rows]
+    net_in = [parse_docker_bytes(r.get("net_input_bytes", "0")) for r in rows]
+    net_out = [parse_docker_bytes(r.get("net_output_bytes", "0")) for r in rows]
+    blk_read = [parse_docker_bytes(r.get("block_read_bytes", "0")) for r in rows]
+    blk_write = [parse_docker_bytes(r.get("block_write_bytes", "0")) for r in rows]
     return {
         "sample_count": len(rows),
-        "peak_memory_bytes": max(mem_values) if mem_values else 0,
-        "avg_memory_bytes": sum(mem_values) / len(mem_values) if mem_values else 0,
-        "total_net_input_bytes": net_in_values[-1] - net_in_values[0] if len(net_in_values) >= 2 else 0,
-        "total_net_output_bytes": net_out_values[-1] - net_out_values[0] if len(net_out_values) >= 2 else 0,
-        "total_block_read_bytes": blk_read_values[-1] - blk_read_values[0] if len(blk_read_values) >= 2 else 0,
-        "total_block_write_bytes": blk_write_values[-1] - blk_write_values[0] if len(blk_write_values) >= 2 else 0,
+        "task_peak_memory_bytes": int(max(mem_vals)) if mem_vals else 0,
+        "task_avg_memory_bytes": int(sum(mem_vals) / len(mem_vals)) if mem_vals else 0,
+        "task_net_rx_bytes": int(net_in[-1] - net_in[0]) if len(net_in) >= 2 else 0,
+        "task_net_tx_bytes": int(net_out[-1] - net_out[0]) if len(net_out) >= 2 else 0,
+        "task_disk_read_bytes": int(blk_read[-1] - blk_read[0]) if len(blk_read) >= 2 else 0,
+        "task_disk_write_bytes": int(blk_write[-1] - blk_write[0]) if len(blk_write) >= 2 else 0,
     }
 
 
 def main():
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-dir", required=True)
     parser.add_argument("--case-id", required=True)
@@ -75,42 +114,33 @@ def main():
 
     run_dir = Path(args.run_dir)
 
-    start_epoch = safe_read_float(run_dir / "task_start_epoch.txt")
-    end_epoch = safe_read_float(run_dir / "task_end_epoch.txt")
+    task_window = safe_read_json(run_dir / "task_window.json")
+    verification = safe_read_json(run_dir / "business_verification.json")
     exit_code = safe_read_float(run_dir / "exit_code.txt")
 
-    verification = safe_read_json(run_dir / "vm_output" / "business_verification.json")
-    if not verification:
-        verification = safe_read_json(run_dir / "business_verification.json")
+    cpu_summary = compute_cpu_summary(run_dir / "container_cpu_samples.csv", task_window)
+    resource_summary = compute_resource_summary(run_dir / "container_resource_samples.csv", task_window)
 
-    task_window = safe_read_json(run_dir / "vm_output" / "task_window.json")
-    if not task_window:
-        task_window = safe_read_json(run_dir / "task_window.json")
-
-    cpu_summary = compute_cpu_summary(run_dir / "container_cpu_samples.csv")
-    resource_summary = compute_resource_summary(run_dir / "container_resource_samples.csv")
-
-    wall_time = None
-    if start_epoch and end_epoch:
-        wall_time = round(end_epoch - start_epoch, 3)
+    task_duration = task_window.get("duration_seconds")
+    container_wall = safe_read_float(run_dir / "task_start_epoch.txt")
+    container_wall_end = safe_read_float(run_dir / "task_end_epoch.txt")
+    container_total = round(container_wall_end - container_wall, 3) if container_wall and container_wall_end else None
 
     summary = {
         "case_id": args.case_id,
         "run_dir": str(run_dir),
-        "wall_time_seconds": wall_time,
+        "task_wall_time_seconds": task_duration,
+        "container_total_wall_time_seconds": container_total,
         "exit_code": exit_code,
-        "verification": verification,
-        "task_window": task_window,
+        "l0_pass": verification.get("L0_pass"),
+        "l1_pass": verification.get("L1_pass"),
+        "hard_pass": verification.get("hard_pass"),
         "cpu_summary": cpu_summary,
         "resource_summary": resource_summary,
-        "l0_pass": verification.get("L0_pass", False),
-        "l1_pass": verification.get("L1_pass", False),
-        "hard_pass": verification.get("hard_pass", False),
-        "l2_pending": verification.get("L2_pending", True),
     }
 
-    summary_path = run_dir / "run_summary.json"
-    summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+    out = run_dir / "run_summary.json"
+    out.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
     print(json.dumps(summary, indent=2, ensure_ascii=False))
 
 
