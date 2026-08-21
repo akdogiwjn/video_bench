@@ -1,65 +1,202 @@
 #!/usr/bin/env python3
-"""SUB-CPU-VIDEO-EDIT-01 verifier: L0 + L1 layers for agentic material-based video editing."""
+"""SUB-CPU-VIDEO-EDIT-01 verifier: L0 + L1 layers for agentic material-based video editing.
+
+Fixes:
+- #25: 9:16 aspect ratio check (not just short_side >= 720)
+- #26: BGM verification (from select_bgm_result or timeline)
+- #27: Subtitle verification (SRT non-empty + format check)
+- #28: Timeline verifier (source_ref valid, start < end, duration alignment, min sources)
+"""
 from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 
 def run_ffprobe(video_path: str) -> dict:
-    cmd = [
-        "ffprobe", "-v", "quiet", "-print_format", "json",
-        "-show_format", "-show_streams", video_path,
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        return {}
-    return json.loads(result.stdout)
+    result = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", video_path],
+        capture_output=True, text=True,
+    )
+    return json.loads(result.stdout) if result.returncode == 0 else {}
+
+
+def load_json_safe(path: Path) -> dict | list | None:
+    if not path.exists() or path.stat().st_size == 0:
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def check_aspect_ratio(w: int, h: int) -> dict:
+    if w == 0 or h == 0:
+        return {"passed": False, "error": "zero dimensions"}
+    ratio = w / h
+    target = 9 / 16
+    tolerance = 0.05
+    is_portrait = h > w
+    passed = is_portrait and abs(ratio - target) <= tolerance
+    return {"width": w, "height": h, "ratio": round(ratio, 4), "target": round(target, 4), "passed": passed}
+
+
+def is_valid_srt(path: Path) -> bool:
+    """Check that SRT file is non-empty and has valid SRT format."""
+    if not path.exists() or path.stat().st_size < 10:
+        return False
+    try:
+        content = path.read_text(encoding="utf-8", errors="replace").strip()
+        # SRT format: index, timestamp range, text — repeated
+        # Check for at least one timestamp pattern
+        return bool(re.search(r"\d{2}:\d{2}:\d{2},\d{3}\s*-->\s*\d{2}:\d{2}:\d{2},\d{3}", content))
+    except OSError:
+        return False
 
 
 def check_l0(output_dir: Path) -> dict:
     checks = {}
-    for name in [
-        "media_inventory.json", "shot_segments.json", "asr_transcript.json",
-        "clip_captions.json", "selection_and_groups.json", "script.json", "timeline.json"
-    ]:
+    for name in ["media_inventory.json", "shot_segments.json", "asr_transcript.json",
+                 "clip_captions.json", "selection_and_groups.json", "script.json", "timeline.json"]:
         path = output_dir / name
+        data = load_json_safe(path)
         checks[name] = {
             "exists": path.exists(),
             "bytes": path.stat().st_size if path.exists() else 0,
-            "has_content": path.exists() and path.stat().st_size > 10,
+            "valid_json": data is not None,
+            "passed": data is not None,
         }
 
-    seg_path = output_dir / "shot_segments.json"
+    # Real shot segmentation check
+    seg_data = load_json_safe(output_dir / "shot_segments.json")
     real_split = False
-    if seg_path.exists():
-        try:
-            seg_data = json.loads(seg_path.read_text())
-            segments = seg_data if isinstance(seg_data, list) else seg_data.get("clips", seg_data.get("segments", []))
-            if isinstance(segments, list) and len(segments) > 1:
-                start_times = set()
-                for seg in segments:
-                    sr = seg.get("source_ref", {}) if isinstance(seg, dict) else {}
-                    s = sr.get("start")
-                    e = sr.get("end")
-                    if s is not None and e is not None and e != sr.get("duration"):
-                        start_times.add(s)
-                real_split = len(start_times) > 0
-        except (json.JSONDecodeError, TypeError):
-            pass
-    checks["real_shot_segmentation"] = {
-        "verified": real_split,
-        "passed": real_split,
-    }
+    if seg_data is not None:
+        segments = seg_data if isinstance(seg_data, list) else seg_data.get("clips", seg_data.get("segments", []))
+        if isinstance(segments, list) and len(segments) > 1:
+            for seg in segments:
+                sr = seg.get("source_ref", {}) if isinstance(seg, dict) else {}
+                s = sr.get("start")
+                e = sr.get("end")
+                if s is not None and e is not None and e > s:
+                    real_split = True
+                    break
+    checks["real_shot_segmentation"] = {"verified": real_split, "passed": real_split}
 
     final = output_dir / "final.mp4"
     checks["final_render"] = {
         "exists": final.exists(),
         "bytes": final.stat().st_size if final.exists() else 0,
+        "passed": final.exists() and final.stat().st_size > 51200,
     }
+    return checks
+
+
+def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, final_duration: float) -> dict:
+    """Enhanced timeline verification (#28)."""
+    checks = {}
+    tl_data = load_json_safe(output_dir / "timeline.json")
+    
+    if tl_data is None:
+        checks["timeline_exists"] = {"passed": False}
+        checks["timeline_valid"] = {"passed": False}
+        checks["multiple_sources"] = {"passed": False, "source_count": 0}
+        checks["distractor_excluded"] = {"passed": True, "uses_distractor": False}
+        checks["bgm_present"] = {"passed": False}
+        return checks
+
+    clips = tl_data if isinstance(tl_data, list) else tl_data.get("clips", tl_data.get("segments", []))
+    if not isinstance(clips, list):
+        clips = []
+
+    checks["timeline_exists"] = {"passed": True}
+
+    # Validate each clip: source_ref, start < end
+    valid_clips = 0
+    source_ids = set()
+    distractor_ids = set(ground_truth.get("distractor_asset_ids", []))
+    uses_distractor = False
+    has_bgm = False
+    negative_ts = False
+
+    for clip in clips:
+        if not isinstance(clip, dict):
+            continue
+        sr = clip.get("source_ref", {})
+        media_id = sr.get("media_id", "")
+        s = sr.get("start")
+        e = sr.get("end")
+
+        if s is not None and e is not None:
+            if s < 0 or e < 0:
+                negative_ts = True
+            elif e > s:
+                valid_clips += 1
+
+        if media_id:
+            source_ids.add(media_id)
+            if media_id in distractor_ids:
+                uses_distractor = True
+
+        # BGM check (#26)
+        if clip.get("kind") == "audio" or clip.get("type") == "bgm" or "bgm" in str(clip.get("path", "")).lower():
+            has_bgm = True
+
+    # Also check select_bgm_result for BGM
+    bgm_data = load_json_safe(output_dir / "select_bgm_result.json")
+    if bgm_data is not None and not has_bgm:
+        bgm = bgm_data.get("bgm", bgm_data.get("result", {}).get("bgm", {}))
+        if isinstance(bgm, dict) and bgm:
+            has_bgm = True
+        elif isinstance(bgm, str) and bgm:
+            has_bgm = True
+
+    checks["timeline_valid"] = {
+        "clip_count": len(clips),
+        "valid_clips": valid_clips,
+        "has_negative_timestamps": negative_ts,
+        "passed": valid_clips > 0 and not negative_ts,
+    }
+
+    min_sources = constraints.get("min_source_files_used", 3)
+    checks["multiple_sources"] = {
+        "source_count": len(source_ids),
+        "min_required": min_sources,
+        "passed": len(source_ids) >= min_sources,
+    }
+
+    checks["distractor_excluded"] = {
+        "distractor_ids": list(distractor_ids),
+        "uses_distractor": uses_distractor,
+        "passed": not uses_distractor,
+    }
+
+    checks["bgm_present"] = {
+        "found_in_timeline": has_bgm,
+        "passed": has_bgm,
+    }
+
+    # Timeline duration vs final duration alignment
+    tl_duration = 0
+    for clip in clips:
+        if isinstance(clip, dict):
+            sr = clip.get("source_ref", {})
+            s = sr.get("start", 0) or 0
+            e = sr.get("end", 0) or 0
+            if e > s:
+                tl_duration += (e - s)
+    if final_duration > 0 and tl_duration > 0:
+        diff_pct = abs(tl_duration / 1000 - final_duration) / final_duration
+        checks["timeline_duration_alignment"] = {
+            "timeline_duration_s": round(tl_duration / 1000, 1),
+            "final_duration_s": round(final_duration, 1),
+            "diff_pct": round(diff_pct * 100, 1),
+            "passed": diff_pct < 0.3,  # within 30%
+        }
+
     return checks
 
 
@@ -79,19 +216,12 @@ def check_l1(output_dir: Path, constraints: dict, ground_truth: dict) -> dict:
     duration = float(fmt.get("duration", 0))
     min_dur, max_dur = constraints.get("duration_range_seconds", [55, 65])
     checks["duration"] = {
-        "actual": round(duration, 1),
-        "min": min_dur,
-        "max": max_dur,
+        "actual": round(duration, 1), "min": min_dur, "max": max_dur,
         "passed": min_dur <= duration <= max_dur,
     }
-    checks["video_stream"] = {
-        "exists": len(video_streams) > 0,
-        "passed": len(video_streams) > 0,
-    }
-    checks["audio_stream"] = {
-        "exists": len(audio_streams) > 0,
-        "passed": len(audio_streams) > 0,
-    }
+    checks["video_stream"] = {"exists": len(video_streams) > 0, "passed": len(video_streams) > 0}
+    checks["audio_stream"] = {"exists": len(audio_streams) > 0, "passed": len(audio_streams) > 0}
+
     if video_streams:
         vs = video_streams[0]
         w = int(vs.get("width", 0))
@@ -102,68 +232,22 @@ def check_l1(output_dir: Path, constraints: dict, ground_truth: dict) -> dict:
             "width": w, "height": h, "short_side": short_side,
             "min_required": min_res, "passed": short_side >= min_res,
         }
+        checks["aspect_ratio_9_16"] = check_aspect_ratio(w, h)
 
-    timeline_path = output_dir / "timeline.json"
-    checks["timeline_valid"] = {
-        "exists": timeline_path.exists(),
-        "passed": False,
-    }
-    if timeline_path.exists():
-        try:
-            tl = json.loads(timeline_path.read_text())
-            clips_in_timeline = tl if isinstance(tl, list) else tl.get("clips", tl.get("segments", []))
-            if isinstance(clips_in_timeline, list) and len(clips_in_timeline) > 0:
-                source_ids = set()
-                for clip in clips_in_timeline:
-                    sr = clip.get("source_ref", {}) if isinstance(clip, dict) else {}
-                    media_id = sr.get("media_id", "")
-                    if media_id:
-                        source_ids.add(media_id)
-                min_sources = constraints.get("min_source_files_used", 3)
-                checks["multiple_sources"] = {
-                    "source_count": len(source_ids),
-                    "min_required": min_sources,
-                    "passed": len(source_ids) >= min_sources,
-                }
-                checks["timeline_valid"]["passed"] = True
-        except (json.JSONDecodeError, TypeError):
-            pass
-
+    # Subtitle verification (#27): SRT must be non-empty and valid format
     subtitle_streams = [s for s in streams if s.get("codec_type") == "subtitle"]
-    srt_exists = (output_dir / "final.srt").exists() or (output_dir / "subtitles.srt").exists()
+    srt_paths = [output_dir / "final.srt", output_dir / "subtitles.srt"]
+    srt_valid = any(is_valid_srt(p) for p in srt_paths)
     checks["subtitle"] = {
         "stream_exists": len(subtitle_streams) > 0,
-        "srt_exists": srt_exists,
-        "passed": len(subtitle_streams) > 0 or srt_exists,
+        "srt_valid": srt_valid,
+        "passed": len(subtitle_streams) > 0 or srt_valid,
     }
 
-    if ground_truth:
-        distractor_ids = set(ground_truth.get("distractor_asset_ids", []))
-        timeline_path = output_dir / "timeline.json"
-        uses_distractor = False
-        if timeline_path.exists():
-            try:
-                tl = json.loads(timeline_path.read_text())
-                clips_in_timeline = tl if isinstance(tl, list) else tl.get("clips", tl.get("segments", []))
-                if isinstance(clips_in_timeline, list):
-                    for clip in clips_in_timeline:
-                        sr = clip.get("source_ref", {}) if isinstance(clip, dict) else {}
-                        media_id = sr.get("media_id", "")
-                        if media_id in distractor_ids:
-                            uses_distractor = True
-                            break
-            except (json.JSONDecodeError, TypeError):
-                pass
-        checks["distractor_excluded"] = {
-            "distractor_ids": list(distractor_ids),
-            "uses_distractor": uses_distractor,
-            "passed": not uses_distractor,
-        }
+    # Timeline + BGM + distractor checks (#26, #28)
+    checks.update(check_timeline(output_dir, constraints, ground_truth, duration))
 
-    checks["file_size"] = {
-        "bytes": final.stat().st_size,
-        "passed": final.stat().st_size > 51200,
-    }
+    checks["file_size"] = {"bytes": final.stat().st_size, "passed": final.stat().st_size > 51200}
     return checks
 
 
@@ -189,17 +273,15 @@ def main():
 
     l0_required = ["media_inventory.json", "shot_segments.json", "asr_transcript.json",
                    "clip_captions.json", "selection_and_groups.json", "script.json", "timeline.json"]
-    l0_pass = all(l0.get(n, {}).get("has_content", False) for n in l0_required) and \
+    l0_pass = all(l0.get(n, {}).get("passed", False) for n in l0_required) and \
               l0.get("real_shot_segmentation", {}).get("passed", False) and \
-              l0.get("final_render", {}).get("exists", False)
+              l0.get("final_render", {}).get("passed", False)
     l1_pass = all(c.get("passed", False) for c in l1.values()) if l1 else False
 
     result = {
         "case_id": "SUB-CPU-VIDEO-EDIT-01",
-        "L0_process": l0,
-        "L0_pass": l0_pass,
-        "L1_deterministic": l1,
-        "L1_pass": l1_pass,
+        "L0_process": l0, "L0_pass": l0_pass,
+        "L1_deterministic": l1, "L1_pass": l1_pass,
         "hard_pass": l0_pass and l1_pass,
         "L2_pending": True,
     }

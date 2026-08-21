@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""SUB-NET-VIDEO-GEN-01 verifier: L0 + L1 layers for agentic multi-shot video generation."""
+"""SUB-NET-VIDEO-GEN-01 verifier: L0 + L1 layers for agentic multi-shot video generation.
+
+Fixes:
+- #24: L0 validates JSON content (script has scenes, storyboard has shots, ref count in gate)
+- #25: L1 checks 9:16 aspect ratio (not just short_side >= 720)
+"""
 from __future__ import annotations
 
 import argparse
@@ -11,46 +16,104 @@ from pathlib import Path
 
 
 def run_ffprobe(video_path: str) -> dict:
-    cmd = [
-        "ffprobe", "-v", "quiet", "-print_format", "json",
-        "-show_format", "-show_streams", video_path,
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        return {}
-    return json.loads(result.stdout)
+    result = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", video_path],
+        capture_output=True, text=True,
+    )
+    return json.loads(result.stdout) if result.returncode == 0 else {}
+
+
+def load_json_safe(path: Path) -> dict | list | None:
+    if not path.exists() or path.stat().st_size == 0:
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
 
 
 def check_l0(output_dir: Path) -> dict:
     checks = {}
+
+    # script.json: must be valid JSON with content (scenes/story/episodes)
+    script_data = load_json_safe(output_dir / "script.json")
+    script_valid = False
+    if script_data is not None:
+        if isinstance(script_data, dict):
+            keys_lower = {k.lower() for k in script_data}
+            script_valid = any(k in keys_lower for k in ("scenes", "story", "episodes", "script", "title", "content"))
+        elif isinstance(script_data, list) and len(script_data) > 0:
+            script_valid = True
     checks["script_json"] = {
         "exists": (output_dir / "script.json").exists(),
-        "bytes": (output_dir / "script.json").stat().st_size if (output_dir / "script.json").exists() else 0,
+        "valid_content": script_valid,
+        "passed": script_valid,
     }
+
+    # storyboard.json: must be valid JSON with >= 4 shots
+    sb_data = load_json_safe(output_dir / "storyboard.json")
+    shot_count = 0
+    sb_valid = False
+    if sb_data is not None:
+        shots = []
+        if isinstance(sb_data, list):
+            shots = sb_data
+        elif isinstance(sb_data, dict):
+            shots = sb_data.get("shots", sb_data.get("storyboard", sb_data.get("scenes", [])))
+            if not isinstance(shots, list):
+                shots = []
+        shot_count = len(shots)
+        sb_valid = shot_count >= 4
     checks["storyboard_json"] = {
         "exists": (output_dir / "storyboard.json").exists(),
-        "bytes": (output_dir / "storyboard.json").stat().st_size if (output_dir / "storyboard.json").exists() else 0,
+        "shot_count": shot_count,
+        "passed": sb_valid,
     }
+
+    # reference_images: count >= 2 and count is part of gate
     ref_dir = output_dir / "reference_images"
-    ref_files = list(ref_dir.glob("*")) if ref_dir.exists() else []
+    ref_files = [f for f in ref_dir.glob("*") if f.is_file()] if ref_dir.exists() else []
     checks["reference_images"] = {
         "exists": ref_dir.exists(),
         "count": len(ref_files),
-        "has_enough": len(ref_files) >= 2,
+        "passed": len(ref_files) >= 2,
     }
+
+    # video_clips: count >= 4
     clips_dir = output_dir / "video_clips"
     clip_files = [f for f in clips_dir.glob("*") if f.suffix in (".mp4", ".mov", ".avi", ".mkv", ".webm")] if clips_dir.exists() else []
     checks["video_clips"] = {
         "exists": clips_dir.exists(),
         "count": len(clip_files),
-        "has_enough": len(clip_files) >= 4,
+        "passed": len(clip_files) >= 4,
     }
+
+    # final render
     final = output_dir / "final.mp4"
     checks["final_render"] = {
         "exists": final.exists(),
         "bytes": final.stat().st_size if final.exists() else 0,
+        "passed": final.exists() and final.stat().st_size > 10240,
     }
     return checks
+
+
+def check_aspect_ratio(w: int, h: int) -> dict:
+    """Check if aspect ratio is approximately 9:16 (0.5625)."""
+    if w == 0 or h == 0:
+        return {"passed": False, "error": "zero dimensions"}
+    ratio = w / h
+    target = 9 / 16  # 0.5625
+    tolerance = 0.05  # allow 0.5125 - 0.6125
+    is_portrait = h > w
+    passed = is_portrait and abs(ratio - target) <= tolerance
+    return {
+        "width": w, "height": h,
+        "ratio": round(ratio, 4),
+        "target": round(target, 4),
+        "is_portrait": is_portrait,
+        "passed": passed,
+    }
 
 
 def check_l1(output_dir: Path, constraints: dict) -> dict:
@@ -69,19 +132,12 @@ def check_l1(output_dir: Path, constraints: dict) -> dict:
     duration = float(fmt.get("duration", 0))
     min_dur, max_dur = constraints.get("duration_range_seconds", [30, 45])
     checks["duration"] = {
-        "actual": round(duration, 1),
-        "min": min_dur,
-        "max": max_dur,
+        "actual": round(duration, 1), "min": min_dur, "max": max_dur,
         "passed": min_dur <= duration <= max_dur,
     }
-    checks["video_stream"] = {
-        "exists": len(video_streams) > 0,
-        "passed": len(video_streams) > 0,
-    }
-    checks["audio_stream"] = {
-        "exists": len(audio_streams) > 0,
-        "passed": len(audio_streams) > 0,
-    }
+    checks["video_stream"] = {"exists": len(video_streams) > 0, "passed": len(video_streams) > 0}
+    checks["audio_stream"] = {"exists": len(audio_streams) > 0, "passed": len(audio_streams) > 0}
+
     if video_streams:
         vs = video_streams[0]
         w = int(vs.get("width", 0))
@@ -89,16 +145,12 @@ def check_l1(output_dir: Path, constraints: dict) -> dict:
         short_side = min(w, h)
         min_res = constraints.get("min_resolution_short_side", 720)
         checks["resolution"] = {
-            "width": w,
-            "height": h,
-            "short_side": short_side,
-            "min_required": min_res,
-            "passed": short_side >= min_res,
+            "width": w, "height": h, "short_side": short_side,
+            "min_required": min_res, "passed": short_side >= min_res,
         }
-    checks["file_size"] = {
-        "bytes": final.stat().st_size,
-        "passed": final.stat().st_size > 10240,
-    }
+        checks["aspect_ratio_9_16"] = check_aspect_ratio(w, h)
+
+    checks["file_size"] = {"bytes": final.stat().st_size, "passed": final.stat().st_size > 10240}
     return checks
 
 
@@ -117,15 +169,14 @@ def main():
     l0 = check_l0(output_dir)
     l1 = check_l1(output_dir, constraints)
 
-    l0_pass = all(c.get("exists", False) for c in [l0.get("script_json"), l0.get("storyboard_json"), l0.get("reference_images"), l0.get("video_clips"), l0.get("final_render")]) and l0.get("video_clips", {}).get("has_enough", False)
+    # L0: all checks must pass (including content validation and counts)
+    l0_pass = all(c.get("passed", False) for c in l0.values())
     l1_pass = all(c.get("passed", False) for c in l1.values()) if l1 else False
 
     result = {
         "case_id": "SUB-NET-VIDEO-GEN-01",
-        "L0_process": l0,
-        "L0_pass": l0_pass,
-        "L1_deterministic": l1,
-        "L1_pass": l1_pass,
+        "L0_process": l0, "L0_pass": l0_pass,
+        "L1_deterministic": l1, "L1_pass": l1_pass,
         "hard_pass": l0_pass and l1_pass,
         "L2_pending": True,
     }

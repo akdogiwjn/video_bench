@@ -75,24 +75,31 @@ edit = [r for r in runs if 'EDIT' in r['run']]
 gen_scores = [r['l2_score'] for r in gen if r['l2_score'] is not None]
 edit_scores = [r['l2_score'] for r in edit if r['l2_score'] is not None]
 
-def stats(scores):
-    if not scores: return None
+def stats(run_list, scores):
+    # #33: denominator = actual run count, not L2-available count
+    # #34: report median as primary, mean as secondary
+    n_runs = len(run_list)
+    n_pass = sum(1 for r in run_list if r['hard_pass'])
+    if not scores:
+        return {'count': n_runs, 'success_rate': f'{n_pass}/{n_runs}', 'l2_available': 0}
     s = sorted(scores)
     n = len(s)
     return {
-        'count': n,
-        'median': s[n//2],
-        'min': min(s),
-        'max': max(s),
-        'mean': round(sum(s)/n, 4),
-        'scores': scores,
-        'success_rate': f'{sum(1 for r in (gen if scores==gen_scores else edit) if r[\"hard_pass\"])}/{n}',
+        'count': n_runs,
+        'success_rate': f'{n_pass}/{n_runs}',
+        'l2_available': n,
+        'l2_missing': n_runs - n,
+        'l2_median': s[n//2],
+        'l2_min': min(s),
+        'l2_max': max(s),
+        'l2_mean': round(sum(s)/n, 4),
+        'l2_scores': scores,
     }
 
 summary = {
     'runs': runs,
-    'gen': stats(gen_scores) or {'count': len(gen), 'success_rate': f'{sum(1 for r in gen if r[\"hard_pass\"])}/{len(gen)}'},
-    'edit': stats(edit_scores) or {'count': len(edit), 'success_rate': f'{sum(1 for r in edit if r[\"hard_pass\"])}/{len(edit)}'},
+    'gen': stats(gen, gen_scores),
+    'edit': stats(edit, edit_scores),
 }
 (r/'benchmark_summary.json').write_text(json.dumps(summary, indent=2, ensure_ascii=False))
 print(json.dumps(summary, indent=2, ensure_ascii=False))
