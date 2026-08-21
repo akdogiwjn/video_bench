@@ -1,0 +1,27 @@
+{
+  "case_id": "SUB-CPU-VIDEO-EDIT-01",
+  "description": "Labels for distractor materials. These must NOT appear in the final video timeline.",
+  "distractors": [
+    {
+      "asset_id": "derived_001",
+      "label": "duplicate_distractor",
+      "reason": "This is a truncated copy of source_001. Using it indicates the agent did not perform real content selection."
+    },
+    {
+      "asset_id": "derived_002",
+      "label": "blurred_distractor",
+      "reason": "This is a blurred version of source_003. It should not appear in a quality edit."
+    },
+    {
+      "asset_id": "derived_003",
+      "label": "low_bitrate_distractor",
+      "reason": "This is a severely compressed version of source_004. Its quality is too low for a professional edit."
+    },
+    {
+      "asset_id": "derived_004",
+      "label": "irrelevant_distractor",
+      "reason": "This is a reversed (time-reversed) version of source_005. Its content is semantically backward."
+    }
+  ],
+  "verification_method": "Check timeline.json source_ref.media_id fields against distractor asset_ids. If any distractor appears, L1 check 'distractor_excluded' fails."
+}

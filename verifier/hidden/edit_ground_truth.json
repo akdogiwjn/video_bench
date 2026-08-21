@@ -1,0 +1,19 @@
+{
+  "case_id": "SUB-CPU-VIDEO-EDIT-01",
+  "description": "Hidden ground truth for EDIT verifier. Not mounted into agent workspace. Only accessible to verifier.",
+  "distractor_asset_ids": ["derived_001", "derived_002", "derived_003", "derived_004"],
+  "distractor_purposes": {
+    "derived_001": "duplicate_distractor",
+    "derived_002": "blurred_distractor",
+    "derived_003": "low_bitrate_distractor",
+    "derived_004": "irrelevant_distractor"
+  },
+  "valid_source_asset_ids": ["source_001", "source_002", "source_003", "source_004", "source_005", "source_006"],
+  "expected_topic_evidence": {
+    "keywords": ["garden", "plant", "urban", "growing", "coffee"],
+    "description": "The source materials are about urban gardening. The final video should reflect this topic."
+  },
+  "narrative_order_hint": {
+    "description": "The source materials suggest a natural narrative order: talking_head intro → broll_environment → broll_detail → broll_action → talking_head conclusion. This is not strictly required but helps verify narrative coherence."
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "case_id": "SUB-CPU-VIDEO-EDIT-01",
+  "duration_range_seconds": [55, 65],
+  "min_resolution_short_side": 720,
+  "aspect_ratio": "9:16",
+  "subtitle_required": true,
+  "bgm_required": true,
+  "voiceover_optional": true,
+  "min_source_files_used": 3,
+  "required_intermediate_outputs": [
+    "media_inventory.json",
+    "shot_segments.json",
+    "asr_transcript.json",
+    "clip_captions.json",
+    "selection_and_groups.json",
+    "script.json",
+    "timeline.json"
+  ],
+  "required_final_output": "final.mp4",
+  "budget": {
+    "max_llm_calls": 20,
+    "max_vlm_calls": 30,
+    "max_tts_calls": 2
+  },
+  "judge_model": "qwen-vl-max",
+  "formal_runs": 3,
+  "smoke_runs": 1
+}

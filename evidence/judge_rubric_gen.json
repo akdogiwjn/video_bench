@@ -1,0 +1,72 @@
+{
+  "case_id": "SUB-NET-VIDEO-GEN-01",
+  "judge_model": "qwen-vl-max",
+  "judge_provider": "dashscope",
+  "temperature": 0,
+  "input_mode": "video",
+  "dimensions": [
+    {
+      "name": "brief_adherence",
+      "description": "Does the final video follow the creative brief? Check theme, mood, style, required elements, aspect ratio, duration range.",
+      "scale": "0-4",
+      "anchors": {
+        "4": "Fully satisfies every constraint in the brief; creative choices enhance the brief's intent.",
+        "3": "Satisfies all hard constraints; minor creative deviations.",
+        "2": "Misses one hard constraint or the overall direction is partially off.",
+        "1": "Multiple hard constraints violated; the video barely relates to the brief.",
+        "0": "The output is unrelated to the brief or no usable video produced."
+      }
+    },
+    {
+      "name": "narrative_completeness",
+      "description": "Does the video tell a coherent story with a beginning, middle, and end? Is the narrative arc clear?",
+      "scale": "0-4",
+      "anchors": {
+        "4": "Clear and engaging narrative arc; beginning, middle, and end are all well-defined.",
+        "3": "Narrative is coherent but one act is weak.",
+        "2": "Fragmented; segments exist but no clear story progression.",
+        "1": "Barely any narrative structure; random sequence of shots.",
+        "0": "No narrative or no usable video."
+      }
+    },
+    {
+      "name": "cross_shot_subject_consistency",
+      "description": "Does the core subject/character maintain visual consistency across at least 3 shots? Check clothing, appearance, identity.",
+      "scale": "0-4",
+      "anchors": {
+        "4": "Subject is perfectly consistent across all shots with the required minimum.",
+        "3": "Minor inconsistency but clearly the same subject.",
+        "2": "Noticeable inconsistency; could be different subjects.",
+        "1": "Major inconsistency; likely different subjects.",
+        "0": "No recognizable recurring subject or no usable video."
+      }
+    },
+    {
+      "name": "visual_continuity",
+      "description": "Are shot transitions smooth? Are there jarring cuts, mismatched compositions, or broken visual flow?",
+      "scale": "0-4",
+      "anchors": {
+        "4": "All transitions are smooth; visual flow is professional.",
+        "3": "Mostly smooth; one or two slightly jarring transitions.",
+        "2": "Several jarring transitions; flow is uneven.",
+        "1": "Poorly connected shots; disorienting.",
+        "0": "No usable video."
+      }
+    },
+    {
+      "name": "audio_video_coherence",
+      "description": "Does the video have a valid audio track? Do audio and video align temporally? Is the audio quality acceptable?",
+      "scale": "0-4",
+      "anchors": {
+        "4": "Clear, well-synced audio that enhances the video.",
+        "3": "Audio is present and synced but quality could be better.",
+        "2": "Audio present but poorly synced or low quality.",
+        "1": "Barely usable audio.",
+        "0": "No audio or no usable video."
+      }
+    }
+  ],
+  "score_formula": "sum(dimensions) / 20",
+  "hard_gate": false,
+  "notes": "L2 judge runs after task_window end. Judge cost does not count toward workload performance metrics. Each formal run gets exactly 1 judge. Retry only on HTTP failure, timeout, or JSON schema parse failure."
+}

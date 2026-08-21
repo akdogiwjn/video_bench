@@ -1,0 +1,16 @@
+{
+  "skill_name": "video-generate",
+  "skill_source": "https://github.com/HITsz-TMG/VideoClaw",
+  "skill_commit": "1324b36",
+  "skill_url": "https://github.com/HITsz-TMG/VideoClaw/tree/1324b36/video-claw",
+  "skill_md_path": "video-claw/SKILL.md",
+  "skill_md_sha256": "PLACEHOLDER",
+  "license": "MIT",
+  "backend_repository": "https://github.com/HITsz-TMG/VideoClaw",
+  "backend_path": "video-claw/backend",
+  "backend_api_entry": "api_server.py",
+  "backend_port": 8000,
+  "provider_support": ["dashscope", "kling", "ark", "deepseek", "openai", "gemini"],
+  "frozen": false,
+  "freeze_pending": "Phase 0 smoke test must pass before freezing commit and SHA256"
+}

@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "description": "Video agent benchmark case index. Two representative workloads covering agentic video generation and agentic material-based video editing.",
+  "cases": {
+    "SUB-NET-VIDEO-GEN-01": {
+      "title": "Agentic Multi-shot Video Generation",
+      "title_cn": "智能体多镜头视频生成",
+      "domain": "video",
+      "workload": "agentic_multi_shot_generation",
+      "primary_resource_dimension": "NET",
+      "secondary_dimensions": ["CPU", "MEM", "DISK"],
+      "agent": "openclaw",
+      "agent_model": "deepseek/deepseek-v4-flash",
+      "implementation": "videoclaw",
+      "skill": "video-generate",
+      "skill_source": "https://github.com/HITsz-TMG/VideoClaw",
+      "skill_commit": "1324b36",
+      "skill_frozen": false,
+      "fixture": "cases/10_video_generate/fixtures/creative_brief.json",
+      "prompt": "cases/10_video_generate/task.prompt",
+      "prompt_sha256": "",
+      "prepare": "cases/10_video_generate/prepare.sh",
+      "prepare_sha256": "",
+      "timeout_seconds": 2400,
+      "formal_runs": 2,
+      "smoke_runs": 1,
+      "budget": {
+        "max_video_api_calls": 8,
+        "max_image_api_calls": 8,
+        "max_tts_api_calls": 2,
+        "max_retry_per_stage": 1
+      },
+      "expected_outputs": [
+        "final.mp4",
+        "script.json",
+        "storyboard.json",
+        "reference_images/",
+        "video_clips/",
+        "business_verification.json"
+      ],
+      "verifier_layers": ["L0_process", "L1_deterministic", "L2_semantic"],
+      "judge_model": "qwen-vl-max"
+    },
+    "SUB-CPU-VIDEO-EDIT-01": {
+      "title": "Agentic Material-based Video Editing",
+      "title_cn": "智能体素材驱动视频剪辑",
+      "domain": "video",
+      "workload": "agentic_material_based_editing",
+      "primary_resource_dimension": "CPU",
+      "secondary_dimensions": ["MEM", "DISK", "NET"],
+      "agent": "openclaw",
+      "agent_model": "deepseek/deepseek-v4-flash",
+      "implementation": "openstoryline-core",
+      "skill": "video-edit",
+      "skill_source": "benchmark-owned (mapped to OpenStoryline frozen implementations)",
+      "upstream_repository": "https://github.com/FireRedTeam/FireRed-OpenStoryline",
+      "upstream_commit": "",
+      "upstream_frozen": false,
+      "fixture": "cases/11_video_edit/fixtures/media/",
+      "fixture_manifest": "cases/11_video_edit/fixtures/source_manifest.json",
+      "prompt": "cases/11_video_edit/task.prompt",
+      "prompt_sha256": "",
+      "prepare": "cases/11_video_edit/prepare.sh",
+      "prepare_sha256": "",
+      "timeout_seconds": 1800,
+      "formal_runs": 3,
+      "smoke_runs": 1,
+      "budget": {
+        "max_llm_calls": 20,
+        "max_vlm_calls": 30,
+        "max_tts_calls": 2
+      },
+      "expected_outputs": [
+        "final.mp4",
+        "media_inventory.json",
+        "shot_segments.json",
+        "asr_transcript.json",
+        "clip_captions.json",
+        "selection_and_groups.json",
+        "script.json",
+        "timeline.json",
+        "business_verification.json"
+      ],
+      "verifier_layers": ["L0_process", "L1_deterministic", "L2_semantic"],
+      "judge_model": "qwen-vl-max",
+      "hidden_ground_truth": "verifier/hidden/"
+    }
+  },
+  "resource_limits": {
+    "cpus": 2,
+    "memory_gb": 4,
+    "gpu": "none",
+    "cpuset": "fixed_by_runner"
+  },
+  "collection": {
+    "cpu": "container cgroup",
+    "memory": "docker stats",
+    "network": "docker stats",
+    "disk": "docker stats",
+    "task_window": "task_window.json",
+    "monitor_scope": "business_execute_phase_only"
+  },
+  "methodology": "已有 benchmark/research → 多个独立开源项目交叉分析 → 重复出现的操作 → 抽象为共性 workload → 选择真实开源实现作为执行载体 → OpenClaw + Skill 自主完成任务 → 独立 verifier 验证",
+  "evidence_sources": "evidence/source_evidence.json",
+  "positioning": "本 benchmark 不声称复现剪映、即梦等闭源产品的内部技术栈。它代表的是当前视频 Agent 的两种典型长链工作模式：从创意出发的生成式视频生产，以及从已有素材出发的智能视频剪辑。"
+}

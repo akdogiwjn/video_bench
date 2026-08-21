@@ -1,0 +1,72 @@
+{
+  "case_id": "SUB-CPU-VIDEO-EDIT-01",
+  "judge_model": "qwen-vl-max",
+  "judge_provider": "dashscope",
+  "temperature": 0,
+  "input_mode": "video",
+  "dimensions": [
+    {
+      "name": "brief_adherence",
+      "description": "Does the final 55-65s 9:16 video align with the editing brief? Check theme, mood, required elements (subtitle, BGM, multiple sources used).",
+      "scale": "0-4",
+      "anchors": {
+        "4": "Fully satisfies the brief; creative editing enhances the source material.",
+        "3": "Satisfies all hard constraints; minor creative deviations.",
+        "2": "Misses one hard constraint (e.g., no subtitle, wrong duration).",
+        "1": "Multiple constraints violated; output barely relates to the brief.",
+        "0": "No usable video or unrelated to the brief."
+      }
+    },
+    {
+      "name": "narrative_coherence",
+      "description": "Is the edit coherent? Does the final video have a clear narrative or thematic flow from the selected materials?",
+      "scale": "0-4",
+      "anchors": {
+        "4": "Clear and engaging narrative flow; excellent pacing and rhythm.",
+        "3": "Coherent flow but pacing is slightly off in one section.",
+        "2": "Fragmented; segments exist but no clear flow.",
+        "1": "Random sequence of clips without discernible structure.",
+        "0": "No usable video."
+      }
+    },
+    {
+      "name": "material_selection_quality",
+      "description": "Did the agent select appropriate clips from the source material? Were distractor/low-quality clips excluded? Were the best moments included?",
+      "scale": "0-4",
+      "anchors": {
+        "4": "Excellent selection; distractors excluded, best moments included, diverse sources used.",
+        "3": "Good selection; one suboptimal inclusion or exclusion.",
+        "2": "Several poor choices; distractors included or best moments missed.",
+        "1": "Mostly poor selection; random clips chosen.",
+        "0": "No usable video or all clips from single source."
+      }
+    },
+    {
+      "name": "editing_continuity",
+      "description": "Are cuts smooth? Are there mismatched compositions, jump cuts, or broken visual continuity between different source clips?",
+      "scale": "0-4",
+      "anchors": {
+        "4": "Professional-grade continuity; all cuts are motivated and smooth.",
+        "3": "Mostly smooth; one or two slightly jarring cuts.",
+        "2": "Several jarring cuts; continuity is uneven.",
+        "1": "Poorly connected; disorienting transitions.",
+        "0": "No usable video."
+      }
+    },
+    {
+      "name": "audio_subtitle_coherence",
+      "description": "Do audio (BGM + voiceover if present) and subtitles align with the video? Is the audio mix balanced? Are subtitles readable and correctly timed?",
+      "scale": "0-4",
+      "anchors": {
+        "4": "Well-mixed audio, perfectly synced subtitles, BGM enhances the mood.",
+        "3": "Audio and subtitles present and synced; minor quality issues.",
+        "2": "Audio or subtitle issues (poor sync, low quality, or missing one).",
+        "1": "Barely usable audio/subtitle.",
+        "0": "No audio, no subtitle, or no usable video."
+      }
+    }
+  ],
+  "score_formula": "sum(dimensions) / 20",
+  "hard_gate": false,
+  "notes": "L2 judge runs after task_window end. Judge cost does not count toward workload performance metrics. Each formal run gets exactly 1 judge. Retry only on HTTP failure, timeout, or JSON schema parse failure."
+}

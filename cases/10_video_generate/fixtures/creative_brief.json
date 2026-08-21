@@ -1,0 +1,39 @@
+{
+  "title": "城市晨光",
+  "title_en": "City Morning Light",
+  "theme": "一名年轻咖啡师在城市中的清晨旅程：从家中出发、穿过街道、抵达咖啡店开始一天的工作。",
+  "theme_en": "A young barista's morning journey through the city: leaving home, walking through streets, arriving at the coffee shop to start the workday.",
+  "style": "电影感，暖色调，自然光，轻快节奏",
+  "style_en": "Cinematic, warm tones, natural light, light-paced",
+  "aspect_ratio": "9:16",
+  "target_duration_seconds": 35,
+  "min_duration_seconds": 30,
+  "max_duration_seconds": 45,
+  "min_shots": 4,
+  "min_scenes": 2,
+  "required_subject": "同一名咖啡师角色，穿白色围裙，出现在至少3个镜头中",
+  "required_subject_en": "Same barista character, wearing white apron, appearing in at least 3 shots",
+  "audio_required": true,
+  "scenes": [
+    {
+      "scene_id": 1,
+      "description": "室内，清晨，角色从床上醒来，拉开窗帘",
+      "description_en": "Interior, early morning, character wakes up and opens curtains"
+    },
+    {
+      "scene_id": 2,
+      "description": "城市街道，角色穿过晨光中的街道走向咖啡店",
+      "description_en": "City street, character walks through morning light toward the coffee shop"
+    },
+    {
+      "scene_id": 3,
+      "description": "咖啡店内，角色系上围裙开始准备咖啡",
+      "description_en": "Inside coffee shop, character puts on apron and starts preparing coffee"
+    }
+  ],
+  "constraints": {
+    "narrative_type": "narrative_short",
+    "resolution_min": "720p",
+    "audio_track": "required"
+  }
+}

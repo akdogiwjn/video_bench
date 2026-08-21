@@ -1,0 +1,22 @@
+{
+  "skill_name": "video-edit",
+  "skill_type": "benchmark-owned",
+  "upstream_repository": "https://github.com/FireRedTeam/FireRed-OpenStoryline",
+  "upstream_commit": "PLACEHOLDER",
+  "upstream_frozen": false,
+  "license": "Apache-2.0",
+  "adapters": [
+    {"tool": "inspect_media", "upstream_module": "open_storyline.nodes.core_nodes.load_media", "upstream_symbol": "LoadMediaNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"},
+    {"tool": "split_shots", "upstream_module": "open_storyline.nodes.core_nodes.split_shots", "upstream_symbol": "SplitShotsNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"},
+    {"tool": "transcribe", "upstream_module": "open_storyline.nodes.core_nodes.asr_node", "upstream_symbol": "LocalASRNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"},
+    {"tool": "understand_clips", "upstream_module": "open_storyline.nodes.core_nodes.understand_clips", "upstream_symbol": "UnderstandClipsNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"},
+    {"tool": "filter_clips", "upstream_module": "open_storyline.nodes.core_nodes.filter_clips", "upstream_symbol": "FilterClipsNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"},
+    {"tool": "group_clips", "upstream_module": "open_storyline.nodes.core_nodes.group_clips", "upstream_symbol": "GroupClipsNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"},
+    {"tool": "generate_script", "upstream_module": "open_storyline.nodes.core_nodes.generate_script", "upstream_symbol": "GenerateScriptNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"},
+    {"tool": "generate_voiceover", "upstream_module": "open_storyline.nodes.core_nodes.generate_voiceover", "upstream_symbol": "GenerateVoiceoverNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"},
+    {"tool": "select_bgm", "upstream_module": "open_storyline.nodes.core_nodes.select_bgm", "upstream_symbol": "SelectBGMNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"},
+    {"tool": "plan_timeline", "upstream_module": "open_storyline.nodes.core_nodes.plan_timeline", "upstream_symbol": "PlanTimelineNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"},
+    {"tool": "render_video", "upstream_module": "open_storyline.nodes.core_nodes.render_video", "upstream_symbol": "RenderVideoNode", "upstream_commit": "PLACEHOLDER", "adapter_sha256": "PLACEHOLDER"}
+  ],
+  "freeze_pending": "Phase 0 smoke test must confirm upstream commit runs correctly before freezing commit and SHA256 values"
+}

@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "description": "All external evidence sources for the video agent benchmark. Every entry must be independently auditable.",
+  "sources": [
+    {
+      "id": "videoweaver",
+      "type": "paper",
+      "title": "VideoWeaver: Evaluating and Evolving Skills for Agentic Long Video Generation",
+      "arxiv_id": "2606.08091",
+      "url": "https://arxiv.org/abs/2606.08091",
+      "repository": "https://github.com/JianhuiWei7/VideoWeaver",
+      "supports": [
+        "agentic_long_video_generation",
+        "16_task_categories",
+        "285_cases",
+        "execution_trace_plus_final_video_judge",
+        "agent_as_judge"
+      ]
+    },
+    {
+      "id": "agenticvbench",
+      "type": "paper",
+      "title": "AgenticVBench: Can AI Agents Complete Real-World Post-Production Tasks?",
+      "arxiv_id": "2605.27705",
+      "url": "https://arxiv.org/abs/2605.27705",
+      "repository": "https://github.com/PhiloLabs/agentic-vbench",
+      "homepage": "https://agenticvbench.com/",
+      "supports": [
+        "video_postproduction_benchmark",
+        "100_tasks",
+        "20_industry_experts",
+        "assembly_repair_sequencing_repurpose",
+        "programmatic_and_rubric_verification"
+      ]
+    },
+    {
+      "id": "crayotter-workflow",
+      "type": "paper",
+      "title": "Crayotter: Traceable Multi-Agent Workflows for Long-Form Video Editing",
+      "arxiv_id": "2606.07636",
+      "url": "https://arxiv.org/abs/2606.07636",
+      "supports": [
+        "source_selection",
+        "multimodal_analysis",
+        "timeline_construction",
+        "narration_subtitle_alignment",
+        "rendering_and_revision",
+        "observable_artifacts"
+      ]
+    },
+    {
+      "id": "crayotter-learning",
+      "type": "paper",
+      "title": "Crayotter: Learning Long-Horizon Video Editing Agents via Group-Relative Preference Backpropagation",
+      "arxiv_id": "2608.02694",
+      "url": "https://arxiv.org/abs/2608.02694",
+      "supports": [
+        "external_benchmark_on_agenticvbench",
+        "9b_model_surpasses_proprietary_systems"
+      ]
+    },
+    {
+      "id": "cutclaw",
+      "type": "paper",
+      "title": "CutClaw: Agentic Hours-Long Video Editing via Music Synchronization",
+      "arxiv_id": "2603.29664",
+      "url": "https://arxiv.org/abs/2603.29664",
+      "repository": "https://github.com/GVCLab/CutClaw",
+      "supports": [
+        "hours_long_footage_editing",
+        "music_synchronization",
+        "multi_agent_framework",
+        "hierarchical_multimodal_decomposition"
+      ]
+    },
+    {
+      "id": "video-use",
+      "type": "agent_skill",
+      "title": "video-use: Edit videos with coding agents",
+      "url": "https://github.com/browser-use/video-use",
+      "skill_url": "https://github.com/browser-use/video-use/blob/main/SKILL.md",
+      "stars": 21095,
+      "license": "MIT",
+      "supports": [
+        "transcribe_to_edl_to_render_pipeline",
+        "coding_agent_video_editing",
+        "self_evaluation",
+        "independent_editing_skill_evidence"
+      ]
+    },
+    {
+      "id": "openstoryline",
+      "type": "video_editing_system",
+      "title": "FireRed-OpenStoryline",
+      "url": "https://github.com/FireRedTeam/FireRed-OpenStoryline",
+      "stars": 3235,
+      "license": "Apache-2.0",
+      "supports": [
+        "default_editing_workflow_skill",
+        "18_available_nodes",
+        "transnetv2_cpu_default",
+        "local_asr_funasr",
+        "mcp_server",
+        "openstoryline_use_skill"
+      ]
+    },
+    {
+      "id": "videoclaw",
+      "type": "video_generation_system",
+      "title": "VideoClaw",
+      "url": "https://github.com/HITsz-TMG/VideoClaw",
+      "stars": 1710,
+      "license": "MIT",
+      "topics": ["openclaw", "openclaw-skills", "video-generation", "aigc"],
+      "supports": [
+        "six_stage_generation_pipeline",
+        "openclaw_skill_native",
+        "dashscope_kling_seedance_provider",
+        "local_backend_deployable",
+        "full_artifact_retention"
+      ]
+    },
+    {
+      "id": "vimax",
+      "type": "video_generation_system",
+      "title": "ViMax: Agentic Video Generation",
+      "url": "https://github.com/HKUDS/ViMax",
+      "stars": 12028,
+      "license": "MIT",
+      "arxiv_id": "2606.07649",
+      "supports": [
+        "idea2video_pipeline",
+        "script2video_pipeline",
+        "agent_loop_tool_calling",
+        "cross_shot_consistency",
+        "benchmark_dataset_35_cases"
+      ]
+    },
+    {
+      "id": "vox-director",
+      "type": "agent_skill",
+      "title": "vox-director: Vox-style paper-collage explainer video agent skill",
+      "url": "https://github.com/Alisa0808/vox-director",
+      "stars": 1386,
+      "license": "MIT",
+      "supports": [
+        "topic_to_final_video_pipeline",
+        "independent_generation_skill_evidence",
+        "ffmpeg_assemble"
+      ]
+    }
+  ],
+  "audit_notes": "All arxiv IDs and GitHub repositories were independently verified on 2026-08-20. Stars and license reflect the verification date."
+}

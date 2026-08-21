@@ -1,0 +1,25 @@
+# API keys - never commit
+config.env
+
+# Results (may contain API keys in logs)
+results/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Test files
+test_tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker images are stored in Docker, not in repo
+*.img
+
+# Temporary build artifacts
+*.tar
+*.tar.gz

@@ -1,0 +1,25 @@
+{
+  "case_id": "SUB-NET-VIDEO-GEN-01",
+  "duration_range_seconds": [30, 45],
+  "min_shots": 4,
+  "min_scenes": 2,
+  "min_resolution_short_side": 720,
+  "aspect_ratio": "9:16",
+  "audio_required": true,
+  "required_intermediate_outputs": [
+    "script.json",
+    "storyboard.json",
+    "reference_images/",
+    "video_clips/"
+  ],
+  "required_final_output": "final.mp4",
+  "budget": {
+    "max_video_api_calls": 8,
+    "max_image_api_calls": 8,
+    "max_tts_api_calls": 2,
+    "max_retry_per_stage": 1
+  },
+  "judge_model": "qwen-vl-max",
+  "formal_runs": 2,
+  "smoke_runs": 1
+}
