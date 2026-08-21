@@ -15,7 +15,7 @@ mkdir -p "${OUTPUT_DIR}"
 systemctl stop docker >/dev/null 2>&1 || service docker stop >/dev/null 2>&1 || true
 pkill -f "jupyter|chromium|chrome|playwright" >/dev/null 2>&1 || true
 
-test -f "${VIDEOCLAW_REPO}/video-claw/SKILL.md" || { echo "[ERROR] VideoClaw SKILL.md not found at ${VIDEOCLAW_REPO}" >&2; exit 1; }
+test -f "${VIDEOCLAW_REPO}/video-claw/SKILL.md" || test -f "${VIDEOCLAW_REPO}/SKILL.md" || { echo "[ERROR] VideoClaw SKILL.md not found at ${VIDEOCLAW_REPO}" >&2; exit 1; }
 test -f "${VIDEOCLAW_REPO}/backend/api_server.py" || { echo "[ERROR] VideoClaw backend not found" >&2; exit 1; }
 
 if ! command -v ffmpeg >/dev/null 2>&1; then

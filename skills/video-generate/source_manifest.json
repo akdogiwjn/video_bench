@@ -1,16 +1,20 @@
 {
   "skill_name": "video-generate",
   "skill_source": "https://github.com/HITsz-TMG/VideoClaw",
-  "skill_commit": "1324b36",
+  "skill_commit": "1324b36020570c279cd9560794a8f5508bf7bb70",
   "skill_url": "https://github.com/HITsz-TMG/VideoClaw/tree/1324b36/video-claw",
-  "skill_md_path": "video-claw/SKILL.md",
-  "skill_md_sha256": "PLACEHOLDER",
+  "upstream_skill_md_path": "video-claw/SKILL.md",
+  "upstream_skill_md_sha256": "e5284bc9d649c54a405dfea44e3acccdfa738fd9d5d7fb2638e1f1e20ec056d6",
+  "benchmark_skill_md_sha256": "b14f8e5a87bd86e8f4fad02a0a512c5a3790b1953dd7e68728e06f251a737901",
+  "backend_requirements_sha256": "4e4f9e8703c6dc1dd7be71e7b1f38d6f7274f7dd2aacf2aadc9065246671f742",
+  "backend_pyproject_sha256": "f9065adb07a2deaa269287d8c2e3ffb84e7ad2e74173e3e15ae801092f7bad59",
   "license": "MIT",
   "backend_repository": "https://github.com/HITsz-TMG/VideoClaw",
   "backend_path": "video-claw/backend",
   "backend_api_entry": "api_server.py",
   "backend_port": 8000,
   "provider_support": ["dashscope", "kling", "ark", "deepseek", "openai", "gemini"],
-  "frozen": false,
-  "freeze_pending": "Phase 0 smoke test must pass before freezing commit and SHA256"
+  "skill_type": "benchmark-adapted",
+  "adaptation": "Removed human stop points for unattended benchmark. Reorganized into API capabilities. Underlying VideoClaw capability unchanged.",
+  "frozen": true
 }

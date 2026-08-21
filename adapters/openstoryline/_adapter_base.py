@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Shared helpers for OpenStoryline CLI adapters. Adapter only adapts; it does not decide."""
+"""Shared helpers for OpenStoryline CLI adapters. Adapter only adapts; it does not decide.
+
+Fixes:
+- #10: RealLLMClient replaces StubLLMClient — calls DeepSeek/qwen-vl-max via OpenAI-compatible API
+- #11: understand_clips input structure matches upstream (inputs["media"] is a dict keyed by media_id)
+"""
 from __future__ import annotations
 
 import json
 import os
 import sys
 import traceback
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 OPENSTORYLINE_REPO = Path(os.environ.get("OPENSTORYLINE_REPO", "/opt/openstoryline"))
@@ -26,6 +31,78 @@ def load_settings():
         config_data = tomllib.load(f)
 
     return Settings.model_validate(config_data, context={"config_dir": str(OPENSTORYLINE_REPO)})
+
+
+@dataclass
+class RealLLMClient:
+    """Real LLM client that calls OpenAI-compatible API (DeepSeek / qwen-vl-max).
+
+    Implements the LLMClient protocol: async complete(system_prompt, user_prompt, media, ...)
+    """
+    llm_model: str = ""
+    llm_base_url: str = ""
+    llm_api_key: str = ""
+    vlm_model: str = ""
+    vlm_base_url: str = ""
+    vlm_api_key: str = ""
+
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    async def complete(
+        self,
+        *,
+        system_prompt: str | None = None,
+        user_prompt: str = "",
+        media: list[dict[str, Any]] | None = None,
+        temperature: float = 0.3,
+        top_p: float = 0.9,
+        max_tokens: int = 2048,
+        model_preferences: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        stop_sequences: list[str] | None = None,
+    ) -> str:
+        from openai import AsyncOpenAI
+
+        is_vlm = media is not None and len(media) > 0
+        if is_vlm:
+            model = self.vlm_model or "qwen-vl-max"
+            base_url = self.vlm_base_url or "https://dashscope.aliyuncs.com/compatible-mode/v1"
+            api_key = self.vlm_api_key
+        else:
+            model = self.llm_model or "deepseek-chat"
+            base_url = self.llm_base_url or "https://api.deepseek.com/v1"
+            api_key = self.llm_api_key
+
+        client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+
+        if is_vlm:
+            content = [{"type": "text", "text": user_prompt}]
+            for m in media:
+                path = m.get("path", "")
+                if path:
+                    import base64
+                    with open(path, "rb") as f:
+                        img_data = base64.b64encode(f.read()).decode("ascii")
+                    content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img_data}"}})
+            messages.append({"role": "user", "content": content})
+        else:
+            messages.append({"role": "user", "content": user_prompt})
+
+        resp = await client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens,
+            stop=stop_sequences,
+        )
+        return resp.choices[0].message.content or ""
 
 
 @dataclass
@@ -57,21 +134,21 @@ class StubNodeSummary:
         return {"messages": self.messages, "artifact_id": artifact_id}
 
 
-@dataclass
-class StubLLMClient:
-    config: Any = None
-
-    async def sample(self, system_prompt: str, user_prompt: str, **kwargs):
-        raise RuntimeError(
-            "StubLLMClient.sample() called. Ensure config.toml has valid [llm] and [vlm] sections "
-            "with model, base_url, and api_key configured."
-        )
-
-
 def make_node_state(session_id: str = "adapter_session", artifact_id: str = "adapter_artifact", lang: str = "zh"):
     from open_storyline.nodes.node_state import NodeState
+    
+    settings = load_settings()
     summary = StubNodeSummary()
-    llm = StubLLMClient()
+
+    llm = RealLLMClient(
+        llm_model=getattr(settings.llm, "model", "deepseek-chat"),
+        llm_base_url=getattr(settings.llm, "base_url", "https://api.deepseek.com/v1"),
+        llm_api_key=getattr(settings.llm, "api_key", ""),
+        vlm_model=getattr(settings.vlm, "model", "qwen-vl-max"),
+        vlm_base_url=getattr(settings.vlm, "base_url", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+        vlm_api_key=getattr(settings.vlm, "api_key", ""),
+    )
+
     return NodeState(
         session_id=session_id,
         artifact_id=artifact_id,

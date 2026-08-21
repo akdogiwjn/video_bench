@@ -11,28 +11,31 @@ RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /opt/openstoryline
 
+# Copy from local frozen snapshot (commit tracked via SHA256 in source_manifest.json)
 COPY FireRed-OpenStoryline-main/ /opt/openstoryline/
 
-RUN pip3 install --no-cache-dir --no-deps torch torchaudio 2>&1 || \
-    pip3 install --no-cache-dir torch torchaudio 2>&1 || true
+# Install pinned requirements
+RUN cd /opt/openstoryline && \
+    pip3 install --no-cache-dir -r requirements.txt
 
+# Install torch CPU-only (--no-deps to skip CUDA packages)
+RUN pip3 install --no-cache-dir --no-deps torch==2.13.0 torchaudio==2.13.0 2>/dev/null || \
+    pip3 install --no-cache-dir --no-deps torch torchaudio 2>/dev/null || true
 RUN pip3 install --no-cache-dir numpy typing-extensions sympy networkx jinja2 fsspec filelock
 
-RUN cd /opt/openstoryline && \
-    pip3 install --no-cache-dir -r requirements.txt 2>&1 || \
-    pip3 install --no-cache-dir \
-    fastapi uvicorn langchain langchain-core langchain-openai langchain-community \
-    langchain-huggingface langchain-mcp-adapters mcp colorlog librosa \
-    transnetv2_pytorch moviepy av ffmpeg-python aiofiles skillkit \
-    sentence-transformers faiss-cpu openai emoji tomli
-
+# Download model weights — FAIL if download fails (no warning bypass)
 RUN cd /opt/openstoryline && \
     if [ ! -f .storyline/models/transnetv2-pytorch-weights.pth ]; then \
-        bash download.sh || echo "[WARN] download.sh failed, weights need manual download"; \
-    fi
+        bash download.sh; \
+    fi && \
+    test -f .storyline/models/transnetv2-pytorch-weights.pth || \
+    (echo "[ERROR] TransNetV2 weights missing" && exit 1)
 
-RUN mkdir -p /opt/video-tools
+# COPY adapters into image (#13 fix)
+COPY video_bench/adapters/openstoryline/ /opt/video-tools/
+RUN chmod +x /opt/video-tools/*.py
 
+# OpenClaw symlink (mounted at runtime)
 RUN ln -sf /opt/openclaw/bin/openclaw /usr/local/bin/openclaw 2>/dev/null || true
 
 ENV PYTHONPATH=/opt/openstoryline:/opt/openstoryline/src

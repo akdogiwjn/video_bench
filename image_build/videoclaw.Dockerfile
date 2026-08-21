@@ -9,20 +9,24 @@ RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /opt/videoclaw
 
+# Fixed commit 1324b36 (frozen)
 COPY VideoClaw-1324b36020570c279cd9560794a8f5508bf7bb70/video-claw/video-claw/backend/ /opt/videoclaw/backend/
-COPY VideoClaw-1324b36020570c279cd9560794a8f5508bf7bb70/video-claw/SKILL.md /opt/videoclaw/SKILL.md
+COPY VideoClaw-1324b36020570c279cd9560794a8f5508bf7bb70/video-claw/SKILL.md /opt/videoclaw/video-claw/SKILL.md
 COPY VideoClaw-1324b36020570c279cd9560794a8f5508bf7bb70/video-claw/references/ /opt/videoclaw/references/
 COPY video_bench/image_build/videoclaw-entrypoint.sh /opt/videoclaw/entrypoint.sh
 RUN chmod +x /opt/videoclaw/entrypoint.sh
 
+# Install pinned requirements (playwright removed — not needed for API-only benchmark)
 RUN cd /opt/videoclaw/backend && \
     sed -i '/playwright/d' requirements.txt && \
     pip3 install --no-cache-dir -r requirements.txt
 
+# Generate config.yaml from example
 RUN cd /opt/videoclaw/backend && \
     cp config.yaml.example config.yaml && \
     sed -i 's/host: 127.0.0.1/host: 0.0.0.0/' config.yaml
 
+# OpenClaw symlink (mounted at runtime)
 RUN ln -sf /opt/openclaw/bin/openclaw /usr/local/bin/openclaw 2>/dev/null || true
 
 ENV PYTHONPATH=/opt/videoclaw/backend

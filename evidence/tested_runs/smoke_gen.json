@@ -1,0 +1,19 @@
+{
+  "git_commit": "c30a52b",
+  "test_date": "2026-08-21",
+  "image_gen": "video-bench-gen:1.0",
+  "image_edit": "video-bench-edit:1.0",
+  "agent": "OpenClaw 2026.7.1-2",
+  "agent_model": "deepseek/deepseek-v4-flash",
+  "vlm_model": "qwen-vl-max",
+  "fixture_version": 1,
+  "hard_pass": false,
+  "l0_pass": true,
+  "l1_pass": false,
+  "l1_fail_reason": "duration 12.0s < 30s minimum",
+  "l2_score": 0.60,
+  "l2_scores": {"brief_adherence": 3, "narrative_completeness": 2, "cross_shot_subject_consistency": 4, "visual_continuity": 3, "audio_video_coherence": 0},
+  "task_wall_time_s": 1171.3,
+  "tool_calls": 97,
+  "tool_failures": 1
+}

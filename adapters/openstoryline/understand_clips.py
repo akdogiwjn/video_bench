@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""understand_clips adapter — wraps UnderstandClipsNode. E4: 视觉/多模态内容理解."""
+"""understand_clips adapter — wraps UnderstandClipsNode. E4: 视觉/多模态内容理解.
+
+Fix #11: upstream UnderstandClipsNode expects inputs["media"] to be a dict
+keyed by media_id (e.g. {"media_0001": {...}}), not {"media": {"media": [...]}}.
+"""
 import argparse
 import json
 import sys
@@ -20,11 +24,24 @@ def main():
     clips = clips_data.get("clips", clips_data) if isinstance(clips_data, dict) else clips_data
 
     media_data = parse_json_arg(args.media)
-    media = media_data.get("media", media_data) if isinstance(media_data, dict) else media_data
+    media_list = media_data.get("media", media_data) if isinstance(media_data, dict) else media_data
+
+    # Build media dict keyed by media_id (upstream expects this)
+    media_dict = {}
+    if isinstance(media_list, list):
+        for m in media_list:
+            mid = m.get("media_id", "")
+            if mid:
+                media_dict[mid] = m
+    elif isinstance(media_list, dict) and "media" in media_list:
+        for m in media_list["media"]:
+            mid = m.get("media_id", "")
+            if mid:
+                media_dict[mid] = m
 
     inputs = {
         "split_shots": {"clips": clips},
-        "media": {"media": media},
+        "media": media_dict,  # upstream does: load_media = inputs["media"]; media_item = load_media.get(media_id)
         "user_request": "",
     }
 

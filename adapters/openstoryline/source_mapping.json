@@ -1,63 +1,21 @@
 {
   "upstream_repository": "https://github.com/FireRedTeam/FireRed-OpenStoryline",
-  "upstream_commit": "PLACEHOLDER",
+  "upstream_commit": "local-snapshot",
+  "upstream_config_toml_sha256": "8bfadde090238decce4994e4428f60e1150384ac57e39b5e82269e6b9eb2a06b",
+  "upstream_requirements_sha256": "9b31307439ae5cfe1eb936d4067f66e92cc742b24b7efa32de9c92dfc780ce95",
   "config_path": "/opt/openstoryline/config.toml",
   "adapters": {
-    "inspect_media": {
-      "module": "open_storyline.nodes.core_nodes.load_media",
-      "symbol": "LoadMediaNode",
-      "adapter": "inspect_media.py"
-    },
-    "split_shots": {
-      "module": "open_storyline.nodes.core_nodes.split_shots",
-      "symbol": "SplitShotsNode",
-      "adapter": "split_shots.py"
-    },
-    "transcribe": {
-      "module": "open_storyline.nodes.core_nodes.asr_node",
-      "symbol": "LocalASRNode",
-      "adapter": "transcribe.py"
-    },
-    "understand_clips": {
-      "module": "open_storyline.nodes.core_nodes.understand_clips",
-      "symbol": "UnderstandClipsNode",
-      "adapter": "understand_clips.py"
-    },
-    "filter_clips": {
-      "module": "open_storyline.nodes.core_nodes.filter_clips",
-      "symbol": "FilterClipsNode",
-      "adapter": "filter_clips.py"
-    },
-    "group_clips": {
-      "module": "open_storyline.nodes.core_nodes.group_clips",
-      "symbol": "GroupClipsNode",
-      "adapter": "group_clips.py"
-    },
-    "generate_script": {
-      "module": "open_storyline.nodes.core_nodes.generate_script",
-      "symbol": "GenerateScriptNode",
-      "adapter": "generate_script.py"
-    },
-    "generate_voiceover": {
-      "module": "open_storyline.nodes.core_nodes.generate_voiceover",
-      "symbol": "GenerateVoiceoverNode",
-      "adapter": "generate_voiceover.py"
-    },
-    "select_bgm": {
-      "module": "open_storyline.nodes.core_nodes.select_bgm",
-      "symbol": "SelectBGMNode",
-      "adapter": "select_bgm.py"
-    },
-    "plan_timeline": {
-      "module": "open_storyline.nodes.core_nodes.plan_timeline",
-      "symbol": "PlanTimelineNode",
-      "adapter": "plan_timeline.py"
-    },
-    "render_video": {
-      "module": "open_storyline.nodes.core_nodes.render_video",
-      "symbol": "RenderVideoNode",
-      "adapter": "render_video.py"
-    }
+    "inspect_media": {"module": "open_storyline.nodes.core_nodes.load_media", "symbol": "LoadMediaNode", "adapter": "inspect_media.py"},
+    "split_shots": {"module": "open_storyline.nodes.core_nodes.split_shots", "symbol": "SplitShotsNode", "adapter": "split_shots.py"},
+    "transcribe": {"module": "open_storyline.nodes.core_nodes.asr_node", "symbol": "LocalASRNode", "adapter": "transcribe.py"},
+    "understand_clips": {"module": "open_storyline.nodes.core_nodes.understand_clips", "symbol": "UnderstandClipsNode", "adapter": "understand_clips.py"},
+    "filter_clips": {"module": "open_storyline.nodes.core_nodes.filter_clips", "symbol": "FilterClipsNode", "adapter": "filter_clips.py"},
+    "group_clips": {"module": "open_storyline.nodes.core_nodes.group_clips", "symbol": "GroupClipsNode", "adapter": "group_clips.py"},
+    "generate_script": {"module": "open_storyline.nodes.core_nodes.generate_script", "symbol": "GenerateScriptNode", "adapter": "generate_script.py"},
+    "generate_voiceover": {"module": "open_storyline.nodes.core_nodes.generate_voiceover", "symbol": "GenerateVoiceoverNode", "adapter": "generate_voiceover.py"},
+    "select_bgm": {"module": "open_storyline.nodes.core_nodes.select_bgm", "symbol": "SelectBGMNode", "adapter": "select_bgm.py"},
+    "plan_timeline": {"module": "open_storyline.nodes.core_nodes.plan_timeline", "symbol": "PlanTimelineNode", "adapter": "plan_timeline.py"},
+    "render_video": {"module": "open_storyline.nodes.core_nodes.render_video", "symbol": "RenderVideoNode", "adapter": "render_video.py"}
   },
   "principles": "Adapter only adapts; it does not decide. Adapters do parameter parsing, path conversion, upstream context/state construction, upstream class/function invocation, error code unification, result serialization to JSON, and execution logging. Adapters do NOT implement their own shot detection, ASR, VLM prompts, or any video processing algorithm. Adapters do NOT decide what the next step should be. Adapters do NOT auto-chain E1→E9."
 }
