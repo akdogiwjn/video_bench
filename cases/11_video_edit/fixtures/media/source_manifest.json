@@ -1,0 +1,132 @@
+{
+  "description": "EDIT fixture V2. Talking-head videos have real TTS speech for ASR. B-roll videos have visual changes for TransNetV2. All content is original (TTS + ffmpeg), Public Domain.",
+  "version": 2,
+  "source_materials": [
+    {
+      "asset_id": "source_001",
+      "type": "image",
+      "file": "source_001.jpg",
+      "sha256": "7e37d874b3359662d6ba6928c372f71ba8a9d0304cb2c20fbac763d7903be37c",
+      "duration_ms": 0
+    },
+    {
+      "asset_id": "source_001",
+      "type": "video",
+      "file": "source_001.mp4",
+      "sha256": "be72c5edaab420636f6f2bb76587a5a85bf40860b8ed369198b65f8991633f30",
+      "duration_ms": 32735,
+      "has_audio": true
+    },
+    {
+      "asset_id": "source_002",
+      "type": "image",
+      "file": "source_002.jpg",
+      "sha256": "077aae60ce858932c19a3700314fab584fee657aa54166371356f40a9b018d7c",
+      "duration_ms": 0
+    },
+    {
+      "asset_id": "source_002",
+      "type": "video",
+      "file": "source_002.mp4",
+      "sha256": "d9b5ec0a064bc26c07c1d99028c7412c6bf519dddc74f886b0d9e76b847cc338",
+      "duration_ms": 14000,
+      "has_audio": true
+    },
+    {
+      "asset_id": "source_003",
+      "type": "image",
+      "file": "source_003.jpg",
+      "sha256": "5b4a15d23e44caa1259cc6e0cdd4ac5464d7ab2a366c73eef19be738cfee3e2c",
+      "duration_ms": 0
+    },
+    {
+      "asset_id": "source_003",
+      "type": "video",
+      "file": "source_003.mp4",
+      "sha256": "c654436b1c4091fba8588db787110f4bb05a9f604cec9ba8390ba856493bad49",
+      "duration_ms": 40000,
+      "has_audio": true
+    },
+    {
+      "asset_id": "source_004",
+      "type": "image",
+      "file": "source_004.jpg",
+      "sha256": "bdc48fc45b89a2bccca6e7559f6aa68eb0d27b5cb75b754afa74794b9dd5cf71",
+      "duration_ms": 0
+    },
+    {
+      "asset_id": "source_004",
+      "type": "video",
+      "file": "source_004.mp4",
+      "sha256": "ee1505db860590fdfe8ca85edeb30af9fb05867c315d14a66f367b7bf2047b96",
+      "duration_ms": 30000,
+      "has_audio": true
+    },
+    {
+      "asset_id": "source_005",
+      "type": "image",
+      "file": "source_005.jpg",
+      "sha256": "8a12a04678d993e762bd926db2434535bd42e2e3b2c4eda3878adbef6e05b827",
+      "duration_ms": 0
+    },
+    {
+      "asset_id": "source_005",
+      "type": "video",
+      "file": "source_005.mp4",
+      "sha256": "ac930911ea5a7c9cc6b48447607f092b30a8ae01b1f9376de949c33b9ea1dd6b",
+      "duration_ms": 50000,
+      "has_audio": true
+    },
+    {
+      "asset_id": "source_006",
+      "type": "image",
+      "file": "source_006.jpg",
+      "sha256": "8a12a04678d993e762bd926db2434535bd42e2e3b2c4eda3878adbef6e05b827",
+      "duration_ms": 0
+    }
+  ],
+  "derived_materials": [
+    {
+      "asset_id": "derived_001",
+      "parent": "source_001",
+      "purpose": "duplicate_distractor",
+      "derivation": "ffmpeg -i source_001.mp4 -t 10 -c copy",
+      "sha256": "19e182c2c915c6ae65e20db9999a2467c222a83b4f49a86ad5b49b6c490fbf63",
+      "duration_ms": 10027,
+      "file": "derived_001.mp4"
+    },
+    {
+      "asset_id": "derived_002",
+      "parent": "source_003",
+      "purpose": "blurred_distractor",
+      "derivation": "ffmpeg -i source_003.mp4 -vf boxblur=20:5",
+      "sha256": "47ebc6c696f7bc6bbee74d687ffe197f29a2bc1b0bc721fc65ea58aa20f812ba",
+      "duration_ms": 40000,
+      "file": "derived_002.mp4"
+    },
+    {
+      "asset_id": "derived_003",
+      "parent": "source_004",
+      "purpose": "low_bitrate_distractor",
+      "derivation": "ffmpeg -i source_004.mp4 -b:v 50k",
+      "sha256": "e2a9e699ae3bf68493cfeecf2801406be7687eb5f2b2e8814d13cc0501487db4",
+      "duration_ms": 30000,
+      "file": "derived_003.mp4"
+    },
+    {
+      "asset_id": "derived_004",
+      "parent": "source_005",
+      "purpose": "irrelevant_distractor",
+      "derivation": "ffmpeg -i source_005.mp4 -vf reverse -af areverse",
+      "sha256": "738800b5cf08db29f45665207e1c50a5dcd960588ed8ee0677ab41805a4162ad",
+      "duration_ms": 50016,
+      "file": "derived_004.mp4"
+    }
+  ],
+  "total_source_video_duration_ms": 166735,
+  "talking_head_count": 2,
+  "broll_count": 3,
+  "image_count": 1,
+  "distractor_count": 4,
+  "notes": "source_001 and source_002 are talking-head videos with real TTS speech (Chinese). source_003-005 are B-roll with visual changes (ffmpeg test patterns). All content is Public Domain (TTS-generated + AI-generated images + ffmpeg)."
+}
