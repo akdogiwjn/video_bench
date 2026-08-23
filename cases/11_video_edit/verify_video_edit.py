@@ -260,12 +260,18 @@ def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, fina
         "passed": has_bgm or bgm_valid,
     }
     
-    # Timeline duration alignment (only video clips, #6 fix)
+    # Timeline duration alignment (ONLY video clips, using timeline_window #6 fix)
     tl_duration = 0
-    for clip in video_clips if video_clips else all_clips:
-        _, s, e = extract_clip_source_info(clip, path_to_asset)
-        if e > s:
-            tl_duration += (e - s)
+    clips_for_duration = video_clips if video_clips else all_clips
+    for clip in clips_for_duration:
+        # Use timeline_window for actual playback duration (not source_ref which is the original clip range)
+        tw = clip.get("timeline_window", {})
+        if isinstance(tw, dict) and tw.get("end", 0) > tw.get("start", 0):
+            tl_duration += (tw["end"] - tw["start"])
+        else:
+            _, s, e = extract_clip_source_info(clip, path_to_asset)
+            if e > s:
+                tl_duration += (e - s)
     if final_duration > 0 and tl_duration > 0:
         diff_pct = abs(tl_duration / 1000 - final_duration) / final_duration
         checks["timeline_duration_alignment"] = {

@@ -10,7 +10,13 @@
   "l0_pass": true,
   "l1_pass": true,
   "l2_score": 1.0,
-  "l2_scores": {"brief_adherence": 4, "narrative_coherence": 4, "material_selection_quality": 4, "editing_continuity": 4, "audio_subtitle_coherence": 4},
+  "l2_scores": {
+    "brief_adherence": 4,
+    "narrative_coherence": 4,
+    "material_selection_quality": 4,
+    "editing_continuity": 4,
+    "audio_subtitle_coherence": 4
+  },
   "task_wall_time_s": 1810.6,
   "final_duration_s": 58.3,
   "final_resolution": "720x1280",
@@ -21,5 +27,7 @@
   "distractor_excluded": true,
   "bgm_present": true,
   "subtitle_in_timeline": true,
-  "brief_provided_to_judge": true
+  "brief_provided_to_judge": true,
+  "superseded": true,
+  "superseded_reason": "Replaced by v3: new provenance verifier, GT V3.1, reference JPGs moved, rubric v3-no-audio."
 }
