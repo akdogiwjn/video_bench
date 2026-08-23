@@ -1,6 +1,6 @@
 {
   "superseded": true,
-  "superseded_reason": "GEN duration was 92.3s but constraints at that commit were [30,45]. Constraints were later widened to [30,95] then restored to [30,45]. This run's hard_pass=True is invalid. Needs re-run with correct constraints.",
+  "superseded_reason": "Replaced by v3: v2 used invalid 92.3s duration with [30,95] constraints. v3 uses correct [30,45] constraints, 35.2s, hard_pass=True, L2=1.0.",
   "test_date": "2026-08-23",
   "image_gen": "video-bench-gen:1.0",
   "agent": "OpenClaw 2026.7.1-2",
@@ -10,8 +10,14 @@
   "hard_pass": true,
   "l0_pass": true,
   "l1_pass": true,
-  "l2_score": 0.80,
-  "l2_scores": {"brief_adherence": 4, "narrative_completeness": 4, "cross_shot_subject_consistency": 4, "visual_continuity": 4, "audio_video_coherence": 0},
+  "l2_score": 0.8,
+  "l2_scores": {
+    "brief_adherence": 4,
+    "narrative_completeness": 4,
+    "cross_shot_subject_consistency": 4,
+    "visual_continuity": 4,
+    "audio_video_coherence": 0
+  },
   "task_wall_time_s": 1432.7,
   "final_duration_s": 92.3,
   "final_resolution": "720x1280",

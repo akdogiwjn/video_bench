@@ -36,14 +36,29 @@ def check_l0(output_dir: Path) -> dict:
     checks = {}
 
     # script.json: must be valid JSON with content (scenes/story/episodes)
+    # Handles both flat and nested structures (VideoClaw wraps in {"stage":..., "artifact":...})
     script_data = load_json_safe(output_dir / "script.json")
     script_valid = False
     if script_data is not None:
-        if isinstance(script_data, dict):
-            keys_lower = {k.lower() for k in script_data}
-            script_valid = any(k in keys_lower for k in ("scenes", "story", "episodes", "script", "title", "content"))
-        elif isinstance(script_data, list) and len(script_data) > 0:
-            script_valid = True
+        # Deep search for script content keys at any nesting level
+        def find_script_content(obj, depth=0):
+            if depth > 5:
+                return False
+            if isinstance(obj, dict):
+                keys_lower = {k.lower() for k in obj.keys()}
+                if any(k in keys_lower for k in ("scenes", "story", "episodes", "logline", "title", "characters", "script")):
+                    # Must have at least one non-trivial value
+                    for k in ("scenes", "story", "episodes", "logline", "title", "characters"):
+                        for actual_key in obj.keys():
+                            if actual_key.lower() == k and obj[actual_key]:
+                                return True
+                for v in obj.values():
+                    if find_script_content(v, depth + 1):
+                        return True
+            elif isinstance(obj, list) and len(obj) > 0:
+                return find_script_content(obj[0], depth + 1)
+            return False
+        script_valid = find_script_content(script_data)
     checks["script_json"] = {
         "exists": (output_dir / "script.json").exists(),
         "valid_content": script_valid,
