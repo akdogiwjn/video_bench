@@ -56,14 +56,22 @@ CPU_PID=$!
 python3 "${ROOT}/docker_resource_monitor.py" --container-name "${CONTAINER_NAME}" --interval 3 --output-dir "${RUN_DIR}" &
 MONITOR_PID=$!
 
-# Agent container — NO hidden GT mounted, NO verifier inside
+# #18 isolation: copy base config to temp dir per run
+OPENCLAW_TEMP="${RUN_DIR}/.openclaw_tmp"
+rm -rf "${OPENCLAW_TEMP}"
+mkdir -p "${OPENCLAW_TEMP}"
+cp -a /root/.openclaw/* "${OPENCLAW_TEMP}/" 2>/dev/null || true
+# Clear sessions to avoid conflicts
+rm -rf "${OPENCLAW_TEMP}/agents/main/sessions/" 2>/dev/null || true
+
+# Agent container — NO hidden GT mounted, NO verifier inside, isolated .openclaw
 docker run --rm \
     --name "${CONTAINER_NAME}" \
     --cpus="${CPUS}" --memory="${MEMORY}" --cpuset-cpus="${CPUSET}" \
     --env-file "${ROOT}/config.env" \
     -e PYTHONPATH=/opt/openstoryline:/opt/openstoryline/src \
     -v /opt/openclaw:/opt/openclaw:ro \
-    -v /root/.openclaw:/root/.openclaw \
+    -v "${OPENCLAW_TEMP}:/root/.openclaw" \
     -v "${ROOT}/skills:/root/.openclaw/skills:ro" \
     -v "${ROOT}/adapters/openstoryline:/workspace/adapters:ro" \
     -v "${ROOT}/cases/${DIR}/task.prompt:/workspace/task.prompt:ro" \
@@ -72,6 +80,9 @@ docker run --rm \
     -v "${RUN_DIR}:/workspace/output" \
     "${IMAGE}" bash /entrypoint.sh 2>&1 | tee "${RUN_DIR}/container.log"
 
+# Cleanup temp .openclaw
+rm -rf "${OPENCLAW_TEMP}" 2>/dev/null || true
+
 RC=${PIPESTATUS[0]:-1}
 
 # Stop monitors
@@ -79,16 +90,33 @@ kill "${CPU_PID}" "${MONITOR_PID}" 2>/dev/null || true
 wait "${CPU_PID}" "${MONITOR_PID}" 2>/dev/null || true
 
 # Host-side verifier (has access to hidden GT)
+# #4 fix: only EDIT gets --ground-truth flag; verifier errors are NOT silently swallowed
 echo "[INFO] running verifier on host..."
-GT_FLAG=""
-GT_PATH="${ROOT}/verifier/hidden/edit_ground_truth.json"
-[ -f "${GT_PATH}" ] && GT_FLAG="--ground-truth ${GT_PATH}"
-
-python3 "${ROOT}/cases/${DIR}/verify_video_${CASE}.py" \
-    --output-dir "${RUN_DIR}" \
-    --constraints "${ROOT}/cases/${DIR}/fixtures/expected_constraints.json" \
-    --result-dir "${RUN_DIR}" \
-    ${GT_FLAG} 2>&1 || true
+if [[ "${CASE}" == "edit" ]]; then
+    GT_PATH="${ROOT}/verifier/hidden/edit_ground_truth.json"
+    if [ -f "${GT_PATH}" ]; then
+        python3 "${ROOT}/cases/${DIR}/verify_video_${CASE}.py" \
+            --output-dir "${RUN_DIR}" \
+            --constraints "${ROOT}/cases/${DIR}/fixtures/expected_constraints.json" \
+            --result-dir "${RUN_DIR}" \
+            --ground-truth "${GT_PATH}" 2>&1
+    else
+        echo "[ERROR] hidden ground truth not found at ${GT_PATH}" >&2
+        echo "VERIFIER_ERROR" > "${RUN_DIR}/verifier_status.txt"
+    fi
+else
+    python3 "${ROOT}/cases/${DIR}/verify_video_${CASE}.py" \
+        --output-dir "${RUN_DIR}" \
+        --constraints "${ROOT}/cases/${DIR}/fixtures/expected_constraints.json" \
+        --result-dir "${RUN_DIR}" 2>&1
+fi
+VERIFIER_RC=$?
+if [ ${VERIFIER_RC} -ne 0 ]; then
+    echo "[WARN] verifier returned rc=${VERIFIER_RC} (task may have failed, or verifier error)" >&2
+    echo "VERIFIER_FAIL" > "${RUN_DIR}/verifier_status.txt"
+else
+    echo "VERIFIER_OK" > "${RUN_DIR}/verifier_status.txt"
+fi
 
 echo "${RC}" > "${RUN_DIR}/exit_code.txt"
 

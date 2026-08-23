@@ -18,9 +18,8 @@ COPY FireRed-OpenStoryline-main/ /opt/openstoryline/
 RUN cd /opt/openstoryline && \
     pip3 install --no-cache-dir -r requirements.txt
 
-# Install torch CPU-only (--no-deps to skip CUDA packages)
-RUN pip3 install --no-cache-dir --no-deps torch==2.13.0 torchaudio==2.13.0 2>/dev/null || \
-    pip3 install --no-cache-dir --no-deps torch torchaudio 2>/dev/null || true
+# Install torch CPU-only — pinned, NO fallback (#10 fix)
+RUN pip3 install --no-cache-dir --no-deps torch==2.13.0 torchaudio==2.13.0
 RUN pip3 install --no-cache-dir numpy typing-extensions sympy networkx jinja2 fsspec filelock
 
 # Download model weights — FAIL if download fails (no warning bypass)

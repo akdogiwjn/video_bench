@@ -1,0 +1,573 @@
+{
+  "upstream_repository": "https://github.com/FireRedTeam/FireRed-OpenStoryline",
+  "upstream_commit": "local-snapshot",
+  "snapshot_description": "File-system snapshot of FireRed-OpenStoryline. Not a git repo; verified via tree hash manifest.",
+  "file_count": 141,
+  "tree_manifest_sha256": "3aea788e281a483e02379938f2d740cd033fff1294a23539c093dbbea6d97e53",
+  "files": [
+    {
+      "path": "./agent_fastapi.py",
+      "sha256": "c27bbf337d03c15369fbae97b9f34846756581c27d39667a4c79947bc65d8a01"
+    },
+    {
+      "path": "./build_env.sh",
+      "sha256": "0f3f033bcefd9a900a6b869241f80703d4ea293cff7db4d580b8df87477c369b"
+    },
+    {
+      "path": "./.claude/skills/openstoryline-install/SKILL.md",
+      "sha256": "38aa7e901e4160c69e8cfeb12b0bbd70ead059ebe3dfd1f45d4ffc7db7464ab7"
+    },
+    {
+      "path": "./.claude/skills/openstoryline-use/scripts/bridge_openstoryline.py",
+      "sha256": "06c5a7dc0a6f713e44f1ce11695fda4e45d874621a488120227eec30f78123f5"
+    },
+    {
+      "path": "./.claude/skills/openstoryline-use/scripts/feishu_file_sender.py",
+      "sha256": "e63cd21da0f1fb4249cc7857cf0534355281ce3d288e901af3a377d5086b52a9"
+    },
+    {
+      "path": "./.claude/skills/openstoryline-use/SKILL.md",
+      "sha256": "039576d90fae1baf735767a88ec1135dc38a5e6ccad8dbde84c2d6abc86b71ef"
+    },
+    {
+      "path": "./cli.py",
+      "sha256": "20017768e31ac49472b72e5548abc2e95c4529ae37f5052a3006e33d643ef03b"
+    },
+    {
+      "path": "./config.toml",
+      "sha256": "8bfadde090238decce4994e4428f60e1150384ac57e39b5e82269e6b9eb2a06b"
+    },
+    {
+      "path": "./Dockerfile",
+      "sha256": "9569dc991381d1671321fc919079cb76c9865b2743671004d047667196de1db2"
+    },
+    {
+      "path": "./docs/source/en/api-key.md",
+      "sha256": "c3fb6bd9be30340926f88de0cd8b84e9644ed2b5a068db13c24f94f4ac96c918"
+    },
+    {
+      "path": "./docs/source/en/faq.md",
+      "sha256": "f4bf852621e21c8528e0a8a71beddd9538e362bf4612453c92b3685791c24777"
+    },
+    {
+      "path": "./docs/source/en/guide.md",
+      "sha256": "572fdf9e6403792552323ef85819c5a4ffe37a9cf9fad5d7e18cd6ec2a94c0b5"
+    },
+    {
+      "path": "./docs/source/zh/api-key.md",
+      "sha256": "62a005ac9d379afef80b39ff5167278fd95e1aea5d6b05b7a6cd8f6446f63b48"
+    },
+    {
+      "path": "./docs/source/zh/faq.md",
+      "sha256": "e2a89b36dc1cba77005715532bfaea1daa36da5d70174f4d14fc403b2c84145d"
+    },
+    {
+      "path": "./docs/source/zh/guide.md",
+      "sha256": "678fbf07c2f71ac2b4ed921a5c9f6f0243102bf521070955eaf07bd6db1822b4"
+    },
+    {
+      "path": "./download.sh",
+      "sha256": "c5172db1c31731eaf6a1064c95d94a890122111f996fa99d1921d1c5ab87c3e0"
+    },
+    {
+      "path": "./.gitattributes",
+      "sha256": "a27140b664c3dc73f53f29090323a87308ecc10eea8a9e5efdcc7458d72da682"
+    },
+    {
+      "path": "./.gitignore",
+      "sha256": "5b2431a174ca80c8e3520aa28fe93f8e27d9e14a7829e7780d43227f93bc6768"
+    },
+    {
+      "path": "./hf_space.sh",
+      "sha256": "bf3dbec4a01a505f91a95b27e85f44b85cbe55ea87819212c6e60ae9a8d45747"
+    },
+    {
+      "path": "./LICENSE",
+      "sha256": "25d0c3c01beb2aa534ce986c0ac86e91f8a34864baf497f84d025074e74b8247"
+    },
+    {
+      "path": "./prompts/tasks/elementrec_text/en/system.md",
+      "sha256": "b7d8d6f4b199ac528ae04a6cbb4d4af6a2f4d9465377d5cb88a70d44a4ec5037"
+    },
+    {
+      "path": "./prompts/tasks/elementrec_text/en/user.md",
+      "sha256": "efe75a56387f7d9fa589cb9647e9eac00fe02d21953d579cd192db1a4cc1881e"
+    },
+    {
+      "path": "./prompts/tasks/elementrec_text/zh/system.md",
+      "sha256": "4be2d16735ccf012764cbc878c04e1ecfb787c4659dbd7511b22e4eb3f03a03e"
+    },
+    {
+      "path": "./prompts/tasks/elementrec_text/zh/user.md",
+      "sha256": "d04094c95da48ce95b3420d2b8a0a9c48866328ec661ab2771569b58ed4fe369"
+    },
+    {
+      "path": "./prompts/tasks/filter_clips/en/system.md",
+      "sha256": "7fa6d76741a76852a095b86292b40fbd23b55bd8327df8fda69f511dd88f4116"
+    },
+    {
+      "path": "./prompts/tasks/filter_clips/en/user.md",
+      "sha256": "90dcc51612dccf8e0575affdd0430b58f396403d098985274ffe6dc6f34a53d7"
+    },
+    {
+      "path": "./prompts/tasks/filter_clips/zh/system.md",
+      "sha256": "012ce4d491b41a9f1acb2dd12f551f8e56043ec027e135af41a6158e3972943d"
+    },
+    {
+      "path": "./prompts/tasks/filter_clips/zh/user.md",
+      "sha256": "05fb2f0f285575df7967771db8914f24a0e66cbdd032790b5c4130f487741507"
+    },
+    {
+      "path": "./prompts/tasks/generate_ai_transition/en/system.md",
+      "sha256": "d026fcccde88d07ecce3418e4d08112a47d28e2fc7da93ce74441117c1cc70d4"
+    },
+    {
+      "path": "./prompts/tasks/generate_ai_transition/en/user.md",
+      "sha256": "303e363c7154c8c2b68b058d0d00f67a38ba5a5fa9b41d6aa264bb367bac6c52"
+    },
+    {
+      "path": "./prompts/tasks/generate_ai_transition/zh/system.md",
+      "sha256": "d625cb438b354d737a3211f868aaeb83b6fc9448929bc1ca7f1bec945683c6a5"
+    },
+    {
+      "path": "./prompts/tasks/generate_ai_transition/zh/user.md",
+      "sha256": "8a62bf2c0a923f449f422d6f1df48095393306ea3498416d14075c2deacc18b0"
+    },
+    {
+      "path": "./prompts/tasks/generate_script/en/system.md",
+      "sha256": "5cbb7eb74e65811e89e05bfa0b61d62e37bcd8c22666f81cb18317dfd6a811ac"
+    },
+    {
+      "path": "./prompts/tasks/generate_script/en/user.md",
+      "sha256": "62438285ccf12968999ee5d8fcd57d7aca244c4268edb76245adf38fa9226a06"
+    },
+    {
+      "path": "./prompts/tasks/generate_script/zh/system.md",
+      "sha256": "9f5ced72d448fc474a18e64e06ed10c1ed86f3046a1d17f421a2af6a4233b894"
+    },
+    {
+      "path": "./prompts/tasks/generate_script/zh/user.md",
+      "sha256": "1a20b62abc59d52c06d898db95d63d91393a7329d8e3871c3f7815f37c738435"
+    },
+    {
+      "path": "./prompts/tasks/generate_title/en/system.md",
+      "sha256": "cea9175433dd4c6162b3dc9ce2a062295f3a8a39c94bdf2339ca0e23f41c5cc6"
+    },
+    {
+      "path": "./prompts/tasks/generate_title/en/user.md",
+      "sha256": "75a1a297faed568d0d57835e71afd432925f6891aeaf4bb8ade113c4a00f36bf"
+    },
+    {
+      "path": "./prompts/tasks/generate_title/zh/system.md",
+      "sha256": "98dc78b9af7e763303f3d574bec2ba0b4d4b64de93e354b454e6311eb6a476fa"
+    },
+    {
+      "path": "./prompts/tasks/generate_title/zh/user.md",
+      "sha256": "49286c86fcbcf709c66ff2ef6bd0bbb9f4d5724b8b2079336cdf9d2a8b0b2663"
+    },
+    {
+      "path": "./prompts/tasks/generate_voiceover/en/system.md",
+      "sha256": "f1a16c480abc83c17f30306f30a9a326c59d8a82b5a6526acaf849be9fb3e3fe"
+    },
+    {
+      "path": "./prompts/tasks/generate_voiceover/en/user.md",
+      "sha256": "c1007bc437b51af34a361128ed4d5a7181bfd4ecc2350fa5463639c810da0038"
+    },
+    {
+      "path": "./prompts/tasks/generate_voiceover/zh/system.md",
+      "sha256": "f9b00d5c512e724c653039edbe1f3ddc3b88ea6aebc28fced9a42b288a327efd"
+    },
+    {
+      "path": "./prompts/tasks/generate_voiceover/zh/user.md",
+      "sha256": "ae0031415fe6ada4243bd61ca35289e7e6458d004dbca05821e057d28eb7e87f"
+    },
+    {
+      "path": "./prompts/tasks/group_clips/en/system.md",
+      "sha256": "2cea25b508bb16b9e710bff79dd262f4eccfe1f377991df28ab11b77dee612a8"
+    },
+    {
+      "path": "./prompts/tasks/group_clips/en/user.md",
+      "sha256": "64c47b3eb4c7d07d0fa64682e6ed3998715ad6530fc4212d597935fd5fd7ac87"
+    },
+    {
+      "path": "./prompts/tasks/group_clips/zh/system.md",
+      "sha256": "804b9a1c5c033beb8d4724824bc11e89a63b0f67b38f3c74feb9c0f60a553241"
+    },
+    {
+      "path": "./prompts/tasks/group_clips/zh/user.md",
+      "sha256": "cecba0ae5acfd0cc5e31c3e7aec1e198585cf691c2e3aac932a5212232d97154"
+    },
+    {
+      "path": "./prompts/tasks/instruction/en/system.md",
+      "sha256": "93a1aea32a87c3023453e651595c8e0b5013a2a51f9f3dff4ee4637758336235"
+    },
+    {
+      "path": "./prompts/tasks/instruction/zh/system.md",
+      "sha256": "2b79bdb6ea76ba63fc2fc3c17e74ff04416a401a706dcccc460aadabc0c57066"
+    },
+    {
+      "path": "./prompts/tasks/scripts/en/omni_bgm_label.md",
+      "sha256": "ce3d994425ff72d48f8b4a02f9906c9d8084c83ed1398cfb6e82bbde957251d8"
+    },
+    {
+      "path": "./prompts/tasks/scripts/en/script_template_label.md",
+      "sha256": "67b2c992778d32bb3365f7046d2d6b34cfff1ab0476fc37dee42ced4af7264b2"
+    },
+    {
+      "path": "./prompts/tasks/scripts/zh/omni_bgm_label.md",
+      "sha256": "997a2145111a52891afdf754f1831829abd0f2f10a1e1b597fec4dd624d4ac87"
+    },
+    {
+      "path": "./prompts/tasks/scripts/zh/script_template_label.md",
+      "sha256": "85c8089501001124989b30d8d61114209bd9789f7b38a5bc68ffc8150b2c1554"
+    },
+    {
+      "path": "./prompts/tasks/select_bgm/en/system.md",
+      "sha256": "a2bfc5e03eeb2dbd6e662f41039d31af6e8c10b3545205710594a6e0c60ea060"
+    },
+    {
+      "path": "./prompts/tasks/select_bgm/en/user.md",
+      "sha256": "04c007f165a614113f4736c00cceda999f45e5a570dc8d3f5f40417831693cc5"
+    },
+    {
+      "path": "./prompts/tasks/select_bgm/zh/system.md",
+      "sha256": "db7f41a6ec0774075ab4ba2a3f54e02a846bc51e1c79782d0f15a0baf02d6f43"
+    },
+    {
+      "path": "./prompts/tasks/select_bgm/zh/user.md",
+      "sha256": "c9dc67da8ba5a48d452e1d8c3f689acc595952c760e2802d1eaafbeb4a3bb65f"
+    },
+    {
+      "path": "./prompts/tasks/speech_rough_cut/zh/system.md",
+      "sha256": "c37a7b6b6b2eb5d36f4b63c2ee95857851fe55be1d8c8bba34d78eac4ff8de5a"
+    },
+    {
+      "path": "./prompts/tasks/speech_rough_cut/zh/user.md",
+      "sha256": "5fde3be577c7b0e7e4ad574ce640409f3364db1b273b9b865bac292c1801f747"
+    },
+    {
+      "path": "./prompts/tasks/understand_clips/en/system_detail.md",
+      "sha256": "8fcf8e20f7a51a784a8242b63f410bee98c81388da3ce90b847c7de47444fbdd"
+    },
+    {
+      "path": "./prompts/tasks/understand_clips/en/system_overall.md",
+      "sha256": "d9a5199a96589a0c116dffbbc7d2ef9761fbd19ac1169c298bd4963d03b3b5dd"
+    },
+    {
+      "path": "./prompts/tasks/understand_clips/en/user_detail.md",
+      "sha256": "6396ca036b720783f18fae573597f54dffdee58690d973e9571b4c68618c9011"
+    },
+    {
+      "path": "./prompts/tasks/understand_clips/en/user_overall.md",
+      "sha256": "da346dc8f4486b2098a15bd52d1e2da54031738e31f7c0d3ef545513e755857c"
+    },
+    {
+      "path": "./prompts/tasks/understand_clips/zh/system_detail.md",
+      "sha256": "841958cb2b7d2771d3e204deff767581c55b65bdacaa262b22d2ca0342b697ab"
+    },
+    {
+      "path": "./prompts/tasks/understand_clips/zh/system_overall.md",
+      "sha256": "6962be4fcb39490d179f3ffbc4ede914356f623f19b1301cedbaad43da4afa7a"
+    },
+    {
+      "path": "./prompts/tasks/understand_clips/zh/user_detail.md",
+      "sha256": "08ba93731be1221ad33d1ca5bb4e3540a4c71b084c94c04cdd32911b27aa0eb2"
+    },
+    {
+      "path": "./prompts/tasks/understand_clips/zh/user_overall.md",
+      "sha256": "50641b2fdac6cee2ee4a43376abd2e994c9e03bfa1fbe33b97696d9673baad50"
+    },
+    {
+      "path": "./README.md",
+      "sha256": "1143fa2960579dfd03a326cd575013379f727a03b056acfd8414bc3cd41730c5"
+    },
+    {
+      "path": "./README_zh.md",
+      "sha256": "4e17dd3421eda3cf2a6881392531cabfc8f171559af98b8ddcaea5615d0d0b28"
+    },
+    {
+      "path": "./requirements.txt",
+      "sha256": "9b31307439ae5cfe1eb936d4067f66e92cc742b24b7efa32de9c92dfc780ce95"
+    },
+    {
+      "path": "./run.sh",
+      "sha256": "ee790d326425a5f4b9348029262629b5c14e9bcafeb83edd7de590ef24ec2775"
+    },
+    {
+      "path": "./scripts/llm_script_template_label.py",
+      "sha256": "c3183030d50f3af9955145894a0a8f72d851c27268638596f34c036c45e28e61"
+    },
+    {
+      "path": "./scripts/omni_bgm_label.py",
+      "sha256": "12ac55587b09c27f8409af33d730a9a8a8f4133714ad0f1b047fa24780eb9b61"
+    },
+    {
+      "path": "./scripts/update_config.py",
+      "sha256": "f17875fbfa075dbe5f9fd64601867f1804d2db77a08b4cafaf3be654d4f9e163"
+    },
+    {
+      "path": "./src/open_storyline/agent.py",
+      "sha256": "982d0d8e6a40d92f94bec93ada0e374796492e28421a160699a1ee45193e0cd4"
+    },
+    {
+      "path": "./src/open_storyline/config.py",
+      "sha256": "c2565dc3acd11ba0734302d0800fbf1425d80db22a0469d4ca9ddab09c0a4693"
+    },
+    {
+      "path": "./src/open_storyline/__init__.py",
+      "sha256": "3ebbb4065141012142168ecc70776886d2a452d80c3c3c1b19fc94665136fd5c"
+    },
+    {
+      "path": "./src/open_storyline/mcp/hooks/chat_middleware.py",
+      "sha256": "9a3f4a8e99ee1b570758fb12d6ef4958acc2c6f737f86b0e7e826bb62832bb4c"
+    },
+    {
+      "path": "./src/open_storyline/mcp/hooks/node_interceptors.py",
+      "sha256": "90335d0245bf56c8cdcba93bc6183ee0c89d05e9c7c6341d5867e4c17d786233"
+    },
+    {
+      "path": "./src/open_storyline/mcp/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "./src/open_storyline/mcp/register_tools.py",
+      "sha256": "d4b3275a54b5902d72ed394da8eb5473bdd7130493ae0a363bdcc361d7c0113e"
+    },
+    {
+      "path": "./src/open_storyline/mcp/sampling_handler.py",
+      "sha256": "d25b471e1f9e2b74523fa6111badc26c20009adf933f03dfcd082a96efa6214c"
+    },
+    {
+      "path": "./src/open_storyline/mcp/sampling_requester.py",
+      "sha256": "157fb0543162f6702d24bd5a58e1ab573abcc5a7430a331caa0aa34021a61e81"
+    },
+    {
+      "path": "./src/open_storyline/mcp/server.py",
+      "sha256": "09130c05337d3a883e364de1c8459ddae178100485956bf8a07c2ac75a11eea1"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/asr_node.py",
+      "sha256": "af89dee82b1cdc1b2edf76a3a22019479d5f171c530c70b8797f949fda5b68df"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/base_node.py",
+      "sha256": "08d3215751bbe2e62777258abdbe4862d19de8418a49ebf9206af7be2ab1334e"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/filter_clips.py",
+      "sha256": "c58a223d02020cb3e5d54a8fb009d563cf6105d65c8fac631dce883e119fb8fa"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/generate_ai_transition.py",
+      "sha256": "932cd7129bf2b55f624b97f36248e1182fc1403b4677cd85963f06d6b11a2c4e"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/generate_script.py",
+      "sha256": "5bce467936c6a18b0365bf4c5cdd998b55db78d07f30acc17205b55065b3a84c"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/generate_voiceover.py",
+      "sha256": "d46e73229da4dad08bf0a33ab9b5453780afb7a2afc04b8ef6d6fa48db1d6df8"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/group_clips.py",
+      "sha256": "422e168edbcf7306c4c57a3aff8e69c5501068a41c8404eb2c37a4bb01a21e65"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/load_media.py",
+      "sha256": "c37302c0dadb2baa1865f0914e2b8a3613b588678116b8efa60b87fc3cd8da5c"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/plan_timeline_ai_transition.py",
+      "sha256": "2ea53ed71b224930a55d2566a26240a325927fd72e9e96918fd0ebb5b467b4ba"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/plan_timeline_pro.py",
+      "sha256": "7a092ca1176008f8e7d46ab28926e7179690d0b4106b27d624a4a28cf8d2bd78"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/plan_timeline.py",
+      "sha256": "ce1b202b0f41f0accd5687025d1df53143abe85250ee339ed58bd687ddac427e"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/recommend_effects.py",
+      "sha256": "a902c23cc631a353a70515a5381ea7f1f73efd01313af71d67e551263d9cbfd1"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/render_video.py",
+      "sha256": "7b34509579601744c31523f9b6352446a7ced7dbf74ad2238969a303797b7e57"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/script_template_rec.py",
+      "sha256": "c5b162960a1bd4375f599bebcd2eaf36594dbcdfdb819272b0bf8a1dc75d19a7"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/search_media.py",
+      "sha256": "4857179d2f05b88c7d40adcf7d44a6211a823dc3c9d58e837b6f6dd6675fabc4"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/select_bgm.py",
+      "sha256": "39dc41b804256d24949b613adaa767bfdfe432fa5e9c9951fd3ff5006fcbbbcc"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/speech_rough_cut.py",
+      "sha256": "7723b455edee6d300cf6cdf59d4cc013a5102201a44d20e12c3b9cfa4e3fe6f6"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/split_shots.py",
+      "sha256": "a50a9f911ba7e0281030b353d9e56050247f46dd34d0deb883a8c0bc03b6688b"
+    },
+    {
+      "path": "./src/open_storyline/nodes/core_nodes/understand_clips.py",
+      "sha256": "a0d7d0e23fa5a525b5cca6f9b95c650f02e98df051b172632d8ed6fe0285d619"
+    },
+    {
+      "path": "./src/open_storyline/nodes/__init__.py",
+      "sha256": "885857197d52d8efe250f1cdac64a441bba15b1bb91c03383811fb2e5ac590b0"
+    },
+    {
+      "path": "./src/open_storyline/nodes/node_manager.py",
+      "sha256": "18dfaa3291ea3b9dabdb9fc8a97b89ef3a837a7c9afce573f81918183863dfd3"
+    },
+    {
+      "path": "./src/open_storyline/nodes/node_schema.py",
+      "sha256": "fd5306bfa00d09122407e81036e9d32614e816d9d7bfe67b35e77a3e933c4f3f"
+    },
+    {
+      "path": "./src/open_storyline/nodes/node_state.py",
+      "sha256": "0492e80bc119d8ad0bdeff1024705cecca17a58ec03bf699ddc9f43880f2bf84"
+    },
+    {
+      "path": "./src/open_storyline/nodes/node_summary.py",
+      "sha256": "50d545d04b02a1de21c523204b07585ca7bf9089619d05714094b6286a0bd1d2"
+    },
+    {
+      "path": "./src/open_storyline/skills/skills_io.py",
+      "sha256": "15c61927dcbb4a3f3c69c2edb13b983c135541af7252400cf1a1330c0e137a45"
+    },
+    {
+      "path": "./src/open_storyline/storage/agent_memory.py",
+      "sha256": "b3e59bc010c01a97ef292f157f25ff22cf952c64bded3f8cbb77e5411486ad78"
+    },
+    {
+      "path": "./src/open_storyline/storage/file.py",
+      "sha256": "8392fb8433e325611149e5f303daa941f047350c290aa08234c7938b5104693d"
+    },
+    {
+      "path": "./src/open_storyline/storage/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "./src/open_storyline/storage/session_manager.py",
+      "sha256": "32d8ea7351201cf52133979a7151224073dabe796d7c07d792372c687d6cb774"
+    },
+    {
+      "path": "./src/open_storyline/utils/ai_transition_cancel.py",
+      "sha256": "673b3375c0ae1cda4a6ff2e9c634848e3efaa619882915e6cb91d0fcbd267d64"
+    },
+    {
+      "path": "./src/open_storyline/utils/ai_transition_client.py",
+      "sha256": "fa2007cdce16c246509cef9b91ad33838c16a8cb5c5efef8609587ec99975ae9"
+    },
+    {
+      "path": "./src/open_storyline/utils/element_filter.py",
+      "sha256": "c3b7f07ec20a4b110b95886ecd8630f2af61dc969d9c132a81721eb3b787f4d2"
+    },
+    {
+      "path": "./src/open_storyline/utils/emoji.py",
+      "sha256": "bf0df479f9f769fe5d611479ef7651fe3f4d3f8e3912b390b584c9438fc32008"
+    },
+    {
+      "path": "./src/open_storyline/utils/ffmpeg_utils.py",
+      "sha256": "f5e427e9cd42a1e5a2609fa1f9396c0e3306965abfc44a76bcde214408b8ebaf"
+    },
+    {
+      "path": "./src/open_storyline/utils/__init__.py",
+      "sha256": "31718da4ced43903916a5af612572eb605baefc230b57570306cd827ef52c990"
+    },
+    {
+      "path": "./src/open_storyline/utils/logging.py",
+      "sha256": "aa3850a5526378404da497b24e1f0f9b4c9f53d5fe9c7867797820c0e28ae56a"
+    },
+    {
+      "path": "./src/open_storyline/utils/media_handler.py",
+      "sha256": "e46dd2beec0010ba9910b70a0106a17ace28745a9818551b596eb06dd60390c2"
+    },
+    {
+      "path": "./src/open_storyline/utils/parse_json.py",
+      "sha256": "e6b53a579c238aabc48357b0dc880fbf5abb5dcd3759bd946df5b55775d74157"
+    },
+    {
+      "path": "./src/open_storyline/utils/prompts.py",
+      "sha256": "0db57c66ce8f81869628281bc1e5dd4f08d26ac08c3187c49a69e563681e4a43"
+    },
+    {
+      "path": "./src/open_storyline/utils/recall.py",
+      "sha256": "ed2fe33299c023d146a10a6417a2279059ac30bf8478074f02be17121eea4dd9"
+    },
+    {
+      "path": "./src/open_storyline/utils/register.py",
+      "sha256": "3b7b2cbd2bf81490028f241d80db53587a1670a9add49ef8ee837584c1b7ee7b"
+    },
+    {
+      "path": "./src/open_storyline/utils/util.py",
+      "sha256": "f4eb9da1281539188a604292a15f3b9964c8f9eb7f618a7f320d6d2402f4a50f"
+    },
+    {
+      "path": "./.storyline/skills/ai_transition_editing_skill/SKILL.md",
+      "sha256": "5ca8d86e7e31b826ac3fd98b546ab7ee85952b145f5c2776859af5b0a6ca6746"
+    },
+    {
+      "path": "./.storyline/skills/create_profile_style_skill/SKILL.md",
+      "sha256": "993e2581e434ef184f018f9debe9cc71f4deae0fc84e4ab6b92ce6c41ce4e72f"
+    },
+    {
+      "path": "./.storyline/skills/default_editing_workflow_skill/SKILL.md",
+      "sha256": "9f7df82135368da07349631314a13647d16e9f96a791a27133488c713265b03f"
+    },
+    {
+      "path": "./.storyline/skills/speech_rough_cut_skill/SKILL.md",
+      "sha256": "4580df65a3bfad898c87f86d002c5a0d8c90f386a118379ec4ebc1bdcba533f2"
+    },
+    {
+      "path": "./.storyline/skills/subtitle_imitation_skill/SKILL.md",
+      "sha256": "4ea58a0ff5580edfd88a6090dc067a03c8d676e6e4d6ca14946ad7420e19ac62"
+    },
+    {
+      "path": "./web/index.html",
+      "sha256": "90efcfa5ce9577e54419417bcf446c4b3841942e9f210475581c34f262b49210"
+    },
+    {
+      "path": "./web/node_map/node_map.html",
+      "sha256": "76315361dd50fa82e3e6bd55575376692ffcc3a1233a4ee7ea467d3127ffde5f"
+    },
+    {
+      "path": "./web/node_map/workflow.json",
+      "sha256": "300182732147dd14910f7fbeb9095f719d20e93412dbc8a7c69e941c9a2118ac"
+    },
+    {
+      "path": "./web/static/app.js",
+      "sha256": "6fcdd224fa9e9688f7456928825f71b180b311117b20adf8022bc9b54b5993e8"
+    },
+    {
+      "path": "./web/static/dice.png",
+      "sha256": "b0baf781f9d3e1697c0ae9802a00c3a754dcd36e06e99cdf4f788e49e1b50ed7"
+    },
+    {
+      "path": "./web/static/github.png",
+      "sha256": "f028b194cee0a38f32aefd7cb5236c0734e4f697d71d116625bf1f6ea4611ad0"
+    },
+    {
+      "path": "./web/static/node_map.png",
+      "sha256": "fe71460d9d5012e4bb33b2a03d0ffeebf1fe99d7947c76681a966c5651641db1"
+    },
+    {
+      "path": "./web/static/style.css",
+      "sha256": "5e920134181757353dea517d6bf8943e206663dfad511bfe41fc261063ce2574"
+    },
+    {
+      "path": "./web/static/user_guide.png",
+      "sha256": "8baee7dfa46d658402102d71a893eccd0237d7f859e343175acb2e1cdac1d4b3"
+    }
+  ]
+}

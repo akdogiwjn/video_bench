@@ -8,19 +8,23 @@
       "domain": "video",
       "workload": "agentic_multi_shot_generation",
       "primary_resource_dimension": "NET",
-      "secondary_dimensions": ["CPU", "MEM", "DISK"],
+      "secondary_dimensions": [
+        "CPU",
+        "MEM",
+        "DISK"
+      ],
       "agent": "openclaw",
       "agent_model": "deepseek/deepseek-v4-flash",
       "implementation": "videoclaw",
       "skill": "video-generate",
       "skill_source": "https://github.com/HITsz-TMG/VideoClaw",
-      "skill_commit": "1324b36",
-      "skill_frozen": false,
+      "skill_commit": "1324b36020570c279cd9560794a8f5508bf7bb70",
+      "skill_frozen": true,
       "fixture": "cases/10_video_generate/fixtures/creative_brief.json",
       "prompt": "cases/10_video_generate/task.prompt",
-      "prompt_sha256": "",
+      "prompt_sha256": "11569195d5f559275223999951378f5fa5621fae5569d7e7ddf1799f0afc5a88",
       "prepare": "cases/10_video_generate/prepare.sh",
-      "prepare_sha256": "",
+      "prepare_sha256": "93a36e71ea7e4b89bb2e5e7116603fc4526714d7175109e294f585f136db5ba5",
       "timeout_seconds": 2400,
       "formal_runs": 2,
       "smoke_runs": 1,
@@ -38,7 +42,11 @@
         "video_clips/",
         "business_verification.json"
       ],
-      "verifier_layers": ["L0_process", "L1_deterministic", "L2_semantic"],
+      "verifier_layers": [
+        "L0_process",
+        "L1_deterministic",
+        "L2_semantic"
+      ],
       "judge_model": "qwen-vl-max"
     },
     "SUB-CPU-VIDEO-EDIT-01": {
@@ -47,22 +55,26 @@
       "domain": "video",
       "workload": "agentic_material_based_editing",
       "primary_resource_dimension": "CPU",
-      "secondary_dimensions": ["MEM", "DISK", "NET"],
+      "secondary_dimensions": [
+        "MEM",
+        "DISK",
+        "NET"
+      ],
       "agent": "openclaw",
       "agent_model": "deepseek/deepseek-v4-flash",
       "implementation": "openstoryline-core",
       "skill": "video-edit",
       "skill_source": "benchmark-owned (mapped to OpenStoryline frozen implementations)",
       "upstream_repository": "https://github.com/FireRedTeam/FireRed-OpenStoryline",
-      "upstream_commit": "",
-      "upstream_frozen": false,
+      "upstream_commit": "local-snapshot",
+      "upstream_frozen": true,
       "fixture": "cases/11_video_edit/fixtures/media/",
       "fixture_manifest": "cases/11_video_edit/fixtures/source_manifest.json",
       "prompt": "cases/11_video_edit/task.prompt",
-      "prompt_sha256": "",
+      "prompt_sha256": "3955e6996f4810b04b96c7ee4a4d4d036d59ebc36fe31997f13fa0cd939d05bb",
       "prepare": "cases/11_video_edit/prepare.sh",
-      "prepare_sha256": "",
-      "timeout_seconds": 1800,
+      "prepare_sha256": "45f885ec11238aafbbd73e2f8ac914389f4e603f120e6008941af4171297d965",
+      "timeout_seconds": 2400,
       "formal_runs": 3,
       "smoke_runs": 1,
       "budget": {
@@ -81,7 +93,11 @@
         "timeline.json",
         "business_verification.json"
       ],
-      "verifier_layers": ["L0_process", "L1_deterministic", "L2_semantic"],
+      "verifier_layers": [
+        "L0_process",
+        "L1_deterministic",
+        "L2_semantic"
+      ],
       "judge_model": "qwen-vl-max",
       "hidden_ground_truth": "verifier/hidden/"
     }

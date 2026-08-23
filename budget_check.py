@@ -14,6 +14,16 @@ import sys
 from pathlib import Path
 
 
+def parse_container_log(log_path: Path) -> dict:
+    """Parse container.log for VideoClaw backend API calls (image/video generation)."""
+    if not log_path.exists():
+        return {"image": 0, "video": 0}
+    content = log_path.read_text(encoding="utf-8", errors="replace")
+    image_calls = content.count("image-synthesis") + content.count("t2i")
+    video_calls = content.count("video_generation") + content.count("generate-video")
+    return {"image": image_calls, "video": video_calls}
+
+
 def parse_api_calls(stderr_path: Path) -> dict:
     """Count API calls from OpenClaw provider-transport-fetch log lines."""
     if not stderr_path.exists():
@@ -81,15 +91,23 @@ def check_budget(calls: dict, budget: dict) -> dict:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--stderr-log", required=True)
-    parser.add_argument("--budget", required=True, help="Path to api_pricing_snapshot.json (contains budget_freeze)")
+    parser.add_argument("--budget", required=True, help="Path to api_pricing_snapshot.json")
+    parser.add_argument("--case-type", required=True, choices=["generate", "edit"], help="Select GEN or EDIT budget")
+    parser.add_argument("--container-log", default="", help="Path to container.log for GEN API calls")
     parser.add_argument("--output", default="")
     args = parser.parse_args()
 
     calls = parse_api_calls(Path(args.stderr_log))
 
+    # For GEN, also parse container.log for image/video API calls
+    if args.case_type == "generate" and args.container_log:
+        container_calls = parse_container_log(Path(args.container_log))
+        calls["image"] = calls.get("image", 0) + container_calls.get("image", 0)
+        calls["video"] = calls.get("video", 0) + container_calls.get("video", 0)
+
     with open(args.budget) as f:
         pricing = json.load(f)
-    budget = pricing.get("budget_freeze", {}).get("edit", {})  # default to edit budget
+    budget = pricing.get("budget_freeze", {}).get(args.case_type, {})
 
     report = check_budget(calls, budget)
 

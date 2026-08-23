@@ -5,7 +5,7 @@ license: Apache-2.0
 metadata:
   source: "benchmark-owned (mapped to OpenStoryline frozen implementations)"
   upstream_repository: "https://github.com/FireRedTeam/FireRed-OpenStoryline"
-  upstream_commit: "PLACEHOLDER"
+  upstream_commit: "local-snapshot"
   upstream_skill: false
   version: "1.0"
 ---
