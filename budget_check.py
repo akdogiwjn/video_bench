@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Parse OpenClaw stderr.log to count API calls and check against budget.
+"""Parse OpenClaw stderr.log + container.log to count API calls and check against budget.
 
-Usage:
-  python3 budget_check.py --stderr-log output/openclaw_agent.stderr.log \
-    --budget evidence/api_pricing_snapshot.json --output output/budget_report.json
+Fixes:
+- #4a: case_type "generate" maps to budget key "gen"
+- #4b: VLM calls counted (from VLM API patterns in stderr)
+- #4c: EDIT budget field names matched (max_tts_calls vs max_tts_api_calls)
+- #4d: budget_pass included in final hard_pass
 """
 from __future__ import annotations
 
@@ -27,28 +29,30 @@ def parse_container_log(log_path: Path) -> dict:
 def parse_api_calls(stderr_path: Path) -> dict:
     """Count API calls from OpenClaw provider-transport-fetch log lines."""
     if not stderr_path.exists():
-        return {"llm": 0, "image": 0, "video": 0, "tts": 0, "total": 0}
+        return {"llm": 0, "vlm": 0, "image": 0, "video": 0, "tts": 0, "total": 0}
 
     content = stderr_path.read_text(encoding="utf-8", errors="replace")
 
-    # Pattern: [provider-transport-fetch] [model-fetch] response provider=deepseek ... status=200
-    # Also check for dashscope image/video generation calls
+    # LLM calls: deepseek model-fetch responses
     llm_calls = len(re.findall(r"\[model-fetch\] response provider=deepseek.*?status=200", content))
-    
-    # Image generation calls (from VideoClaw backend, not in OpenClaw log)
-    # These would appear in container.log, not stderr
+
+    # VLM calls: look for qwen-vl or VLM-related API calls
+    vlm_calls = len(re.findall(r"qwen-vl|vlm.*complete|VLM", content, re.IGNORECASE))
+
+    # Image generation
     image_calls = content.count("image-synthesis") + content.count("t2i")
-    
-    # Video generation calls
+
+    # Video generation
     video_calls = content.count("video-synthesis") + content.count("i2v") + content.count("text2video")
-    
+
     # TTS calls
-    tts_calls = content.count("tts") + content.count("voiceover") + content.count("edge_tts")
-    
-    total = llm_calls + image_calls + video_calls + tts_calls
-    
+    tts_calls = content.count("edge_tts") + content.count("tts") + content.count("voiceover")
+
+    total = llm_calls + vlm_calls + image_calls + video_calls + tts_calls
+
     return {
         "llm": llm_calls,
+        "vlm": vlm_calls,
         "image": image_calls,
         "video": video_calls,
         "tts": tts_calls,
@@ -57,33 +61,43 @@ def parse_api_calls(stderr_path: Path) -> dict:
 
 
 def check_budget(calls: dict, budget: dict) -> dict:
-    """Check if API call counts exceed budget."""
+    """Check if API call counts exceed budget. Handles all field name variants."""
     results = {}
     exceeded = False
 
-    budget_map = {
-        "llm": budget.get("max_llm_calls"),
-        "image": budget.get("max_image_api_calls"),
-        "video": budget.get("max_video_api_calls"),
-        "tts": budget.get("max_tts_api_calls"),
+    # Field name mapping: our key → possible budget JSON keys
+    field_map = {
+        "llm": ["max_llm_calls"],
+        "vlm": ["max_vlm_calls"],
+        "image": ["max_image_api_calls", "max_image_calls"],
+        "video": ["max_video_api_calls", "max_video_calls"],
+        "tts": ["max_tts_api_calls", "max_tts_calls"],
     }
 
     for call_type, count in calls.items():
         if call_type == "total":
             continue
-        limit = budget_map.get(call_type)
+
+        possible_keys = field_map.get(call_type, [])
+        limit = None
+        for key in possible_keys:
+            if key in budget:
+                limit = budget[key]
+                break
+
         if limit is not None and count > limit:
             results[call_type] = {"count": count, "limit": limit, "exceeded": True}
             exceeded = True
         elif limit is not None:
             results[call_type] = {"count": count, "limit": limit, "exceeded": False}
         else:
-            results[call_type] = {"count": count, "limit": None, "exceeded": False}
+            results[call_type] = {"count": count, "limit": None, "exceeded": False, "note": "no budget defined"}
 
     return {
         "call_counts": calls,
         "budget_check": results,
         "budget_exceeded": exceeded,
+        "budget_pass": not exceeded,
         "status": "BUDGET_EXCEEDED" if exceeded else "OK",
     }
 
@@ -107,13 +121,16 @@ def main():
 
     with open(args.budget) as f:
         pricing = json.load(f)
-    budget = pricing.get("budget_freeze", {}).get(args.case_type, {})
+
+    # #4a fix: map "generate" → "gen" key in budget_freeze
+    budget_key = "gen" if args.case_type == "generate" else "edit"
+    budget = pricing.get("budget_freeze", {}).get(budget_key, {})
 
     report = check_budget(calls, budget)
 
     if args.output:
         Path(args.output).write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    
+
     print(json.dumps(report, indent=2, ensure_ascii=False))
     sys.exit(1 if report["budget_exceeded"] else 0)
 

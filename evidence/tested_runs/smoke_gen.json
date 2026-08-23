@@ -11,9 +11,17 @@
   "l0_pass": true,
   "l1_pass": false,
   "l1_fail_reason": "duration 12.0s < 30s minimum",
-  "l2_score": 0.60,
-  "l2_scores": {"brief_adherence": 3, "narrative_completeness": 2, "cross_shot_subject_consistency": 4, "visual_continuity": 3, "audio_video_coherence": 0},
+  "l2_score": 0.6,
+  "l2_scores": {
+    "brief_adherence": 3,
+    "narrative_completeness": 2,
+    "cross_shot_subject_consistency": 4,
+    "visual_continuity": 3,
+    "audio_video_coherence": 0
+  },
   "task_wall_time_s": 1171.3,
   "tool_calls": 97,
-  "tool_failures": 1
+  "tool_failures": 1,
+  "superseded": true,
+  "superseded_reason": "Replaced by v2 smoke runs"
 }

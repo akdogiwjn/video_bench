@@ -18,8 +18,12 @@ run_case() {
     # Hardcoded CASE_ID — never construct from case_type string (#3 fix)
     if [[ "${case_type}" == "generate" ]]; then
         case_id="SUB-NET-VIDEO-GEN-01"
+        rubric_file="${ROOT}/evidence/judge_rubric_gen.json"
+        brief_file="${ROOT}/cases/10_video_generate/fixtures/creative_brief.json"
     else
         case_id="SUB-CPU-VIDEO-EDIT-01"
+        rubric_file="${ROOT}/evidence/judge_rubric_edit.json"
+        brief_file="${ROOT}/cases/11_video_edit/fixtures/edit_brief.json"
     fi
 
     run_name="${case_type^^}_${run_num}"
@@ -37,19 +41,13 @@ run_case() {
     # L2 judge — find final.mp4 in the actual output dir
     local output_dir="${run_root}/${case_id}"
     if [ -f "${output_dir}/final.mp4" ]; then
-        local brief_flag=""
-        if [[ "${case_type}" == "generate" ]]; then
-            brief_flag="--brief ${ROOT}/cases/10_video_generate/fixtures/creative_brief.json"
-        else
-            brief_flag="--brief ${ROOT}/cases/11_video_edit/fixtures/edit_brief.json"
-        fi
         python3 "${ROOT}/l2_judge.py" \
             --video "${output_dir}/final.mp4" \
-            --rubric "${ROOT}/evidence/judge_rubric_${case_type}.json" \
+            --rubric "${rubric_file}" \
             --output "${output_dir}/l2_judge_result.json" \
             --case-id "${case_id}" \
             --api-key "${DASHSCOPE_API_KEY}" \
-            ${brief_flag} 2>&1 | tee "${output_dir}/l2_judge.log" || true
+            --brief "${brief_file}" 2>&1 | tee "${output_dir}/l2_judge.log" || true
     fi
 
     # Budget check (#16: distinguish GEN/EDIT, GEN also reads container.log)

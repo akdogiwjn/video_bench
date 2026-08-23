@@ -7,6 +7,9 @@
   "upstream_config_toml_sha256": "8bfadde090238decce4994e4428f60e1150384ac57e39b5e82269e6b9eb2a06b",
   "upstream_requirements_sha256": "9b31307439ae5cfe1eb936d4067f66e92cc742b24b7efa32de9c92dfc780ce95",
   "upstream_frozen": true,
+  "upstream_tree_manifest": "evidence/openstoryline_tree_manifest.json",
+  "upstream_tree_manifest_sha256": "3aea788e281a483e",
+  "upstream_tree_file_count": 141,
   "license": "Apache-2.0",
   "benchmark_skill_md_sha256": "d2212fd46da289bd8dd27b7bcc5aca0b57121aff88ccf5f00a3e7c499404b688",
   "adapters": [

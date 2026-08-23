@@ -1,5 +1,6 @@
 {
-  "git_commit": "a129ad3",
+  "superseded": true,
+  "superseded_reason": "GEN duration was 92.3s but constraints at that commit were [30,45]. Constraints were later widened to [30,95] then restored to [30,45]. This run's hard_pass=True is invalid. Needs re-run with correct constraints.",
   "test_date": "2026-08-23",
   "image_gen": "video-bench-gen:1.0",
   "agent": "OpenClaw 2026.7.1-2",

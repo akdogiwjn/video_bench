@@ -10,7 +10,13 @@
   "l0_pass": true,
   "l1_pass": true,
   "l2_score": 0.95,
-  "l2_scores": {"brief_adherence": 4, "narrative_coherence": 4, "material_selection_quality": 4, "editing_continuity": 4, "audio_subtitle_coherence": 3},
+  "l2_scores": {
+    "brief_adherence": 4,
+    "narrative_coherence": 4,
+    "material_selection_quality": 4,
+    "editing_continuity": 4,
+    "audio_subtitle_coherence": 3
+  },
   "task_wall_time_s": 2089.1,
   "tool_calls": 141,
   "tool_failures": 1,
@@ -18,5 +24,7 @@
   "final_resolution": "720x1280",
   "distractor_excluded": true,
   "distractor_count": 4,
-  "source_count_used": 12
+  "source_count_used": 12,
+  "superseded": true,
+  "superseded_reason": "Replaced by v2 smoke runs"
 }

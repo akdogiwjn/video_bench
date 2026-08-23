@@ -1,9 +1,9 @@
 {
   "case_id": "SUB-CPU-VIDEO-EDIT-01",
   "judge_model": "qwen-vl-max",
-  "judge_provider": "dashscope",
   "temperature": 0,
   "input_mode": "video",
+  "notes": "Audio dimensions removed from VLM judge — qwen-vl-max cannot hear audio. Audio checks (stream exists, BGM presence) moved to L1 deterministic verifier.",
   "dimensions": [
     {
       "name": "brief_adherence",
@@ -54,19 +54,18 @@
       }
     },
     {
-      "name": "audio_subtitle_coherence",
-      "description": "Do audio (BGM + voiceover if present) and subtitles align with the video? Is the audio mix balanced? Are subtitles readable and correctly timed?",
+      "name": "subtitle_visual_quality",
+      "description": "Are subtitles visually readable? Correctly positioned? Not overlapping content? This replaces the old audio_subtitle_coherence dimension which qwen-vl-max cannot fully judge (no audio understanding).",
       "scale": "0-4",
       "anchors": {
-        "4": "Well-mixed audio, perfectly synced subtitles, BGM enhances the mood.",
-        "3": "Audio and subtitles present and synced; minor quality issues.",
-        "2": "Audio or subtitle issues (poor sync, low quality, or missing one).",
-        "1": "Barely usable audio/subtitle.",
-        "0": "No audio, no subtitle, or no usable video."
+        "4": "Subtitles are clearly readable, well-positioned, professional.",
+        "3": "Subtitles present and readable; minor positioning issues.",
+        "2": "Subtitles present but hard to read or poorly positioned.",
+        "1": "Barely visible subtitles or major formatting issues.",
+        "0": "No subtitles visible or no usable video."
       }
     }
   ],
   "score_formula": "sum(dimensions) / 20",
-  "hard_gate": false,
-  "notes": "L2 judge runs after task_window end. Judge cost does not count toward workload performance metrics. Each formal run gets exactly 1 judge. Retry only on HTTP failure, timeout, or JSON schema parse failure."
+  "hard_gate": false
 }

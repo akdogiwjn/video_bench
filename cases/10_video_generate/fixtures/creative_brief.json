@@ -8,7 +8,7 @@
   "aspect_ratio": "9:16",
   "target_duration_seconds": 35,
   "min_duration_seconds": 30,
-  "max_duration_seconds": 90,
+  "max_duration_seconds": 45,
   "min_shots": 4,
   "min_scenes": 2,
   "required_subject": "同一名咖啡师角色，穿白色围裙，出现在至少3个镜头中",

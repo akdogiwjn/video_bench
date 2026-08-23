@@ -1,9 +1,9 @@
 {
   "case_id": "SUB-NET-VIDEO-GEN-01",
   "judge_model": "qwen-vl-max",
-  "judge_provider": "dashscope",
   "temperature": 0,
   "input_mode": "video",
+  "notes": "Audio dimensions removed from VLM judge — qwen-vl-max cannot hear audio. Audio checks moved to L1 deterministic verifier (audio stream exists, silencedetect).",
   "dimensions": [
     {
       "name": "brief_adherence",
@@ -54,19 +54,18 @@
       }
     },
     {
-      "name": "audio_video_coherence",
-      "description": "Does the video have a valid audio track? Do audio and video align temporally? Is the audio quality acceptable?",
+      "name": "visual_quality",
+      "description": "Overall visual quality: resolution, color, lighting, composition of individual shots. This replaces the old audio_video_coherence dimension which qwen-vl-max cannot judge (no audio understanding).",
       "scale": "0-4",
       "anchors": {
-        "4": "Clear, well-synced audio that enhances the video.",
-        "3": "Audio is present and synced but quality could be better.",
-        "2": "Audio present but poorly synced or low quality.",
-        "1": "Barely usable audio.",
-        "0": "No audio or no usable video."
+        "4": "Professional visual quality; excellent color, lighting, composition.",
+        "3": "Good quality; minor issues in one area.",
+        "2": "Acceptable but several quality issues.",
+        "1": "Poor visual quality throughout.",
+        "0": "No usable video."
       }
     }
   ],
   "score_formula": "sum(dimensions) / 20",
-  "hard_gate": false,
-  "notes": "L2 judge runs after task_window end. Judge cost does not count toward workload performance metrics. Each formal run gets exactly 1 judge. Retry only on HTTP failure, timeout, or JSON schema parse failure."
+  "hard_gate": false
 }
