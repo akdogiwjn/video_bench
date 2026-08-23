@@ -4,7 +4,7 @@
 
 生成类负载覆盖创意理解、叙事与镜头规划、视觉资产生成、多镜头视频生成、音频组织及最终合成；剪辑类负载覆盖素材结构化、镜头切分、ASR、多模态理解、素材筛选与组织、时间线规划及最终渲染。
 
-两类负载均使用 OpenClaw 作为唯一任务规划与工具编排 Agent。生成类使用 VideoClaw 能力（候选冻结版本）；剪辑类使用基于共性操作设计的 benchmark Skill，通过薄 CLI Adapter 调用 OpenStoryline 核心实现。
+两类负载均使用 OpenClaw 作为唯一任务规划与工具编排 Agent。生成类使用 VideoClaw 能力（best-effort 冻结版本）；剪辑类使用基于共性操作设计的 benchmark Skill，通过薄 CLI Adapter 调用 OpenStoryline 核心实现。
 
 **VideoClaw 和 OpenStoryline 只是两个适合被冻结、运行和测量的代表实现。Benchmark 真正关注的是当前视频 Agent 中反复出现的通用工作模式，而非复现任何单一闭源产品或开源项目的内部架构。**
 
