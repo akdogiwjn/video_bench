@@ -1,28 +1,12 @@
 {
   "case_id": "SUB-CPU-VIDEO-EDIT-01",
-  "description": "Labels for distractor materials V2. These must NOT appear in the final video timeline.",
+  "description": "Labels for distractor materials V3. These must NOT appear in the final video timeline.",
+  "fixture_version": 3,
   "distractors": [
-    {
-      "asset_id": "derived_001",
-      "label": "duplicate_distractor",
-      "reason": "Truncated 10s copy of source_001. Using it indicates no real content selection."
-    },
-    {
-      "asset_id": "derived_002",
-      "label": "blurred_distractor",
-      "reason": "Blurred version of source_003. Too blurry for quality edit."
-    },
-    {
-      "asset_id": "derived_003",
-      "label": "low_bitrate_distractor",
-      "reason": "Severely compressed version of source_004. Quality too low."
-    },
-    {
-      "asset_id": "derived_004",
-      "label": "irrelevant_distractor",
-      "reason": "Time-reversed version of source_005. Semantically backward."
-    }
+    {"asset_id": "derived_001", "parent_asset": "source_001_video", "label": "duplicate_distractor", "reason": "Truncated 10s copy of source_001_video. Using it indicates no real content selection."},
+    {"asset_id": "derived_002", "parent_asset": "source_003_video", "label": "blurred_distractor", "reason": "Blurred version of source_003_video. Too blurry for quality edit."},
+    {"asset_id": "derived_003", "parent_asset": "source_004_video", "label": "low_bitrate_distractor", "reason": "Severely compressed version of source_004_video. Quality too low."},
+    {"asset_id": "derived_004", "parent_asset": "source_005_video", "label": "irrelevant_distractor", "reason": "Time-reversed version of source_005_video. Semantically backward."}
   ],
-  "verification_method": "Check timeline.json source_ref.media_id fields against distractor asset_ids. If any distractor appears, L1 check 'distractor_excluded' fails.",
-  "fixture_version": 2
+  "verification_method": "Check timeline clips: map source_path → fixture asset_id via manifest, then check against distractor_asset_ids."
 }

@@ -92,14 +92,16 @@ wait "${CPU_PID}" "${MONITOR_PID}" 2>/dev/null || true
 # Host-side verifier (has access to hidden GT)
 # #4 fix: only EDIT gets --ground-truth flag; verifier errors are NOT silently swallowed
 echo "[INFO] running verifier on host..."
-if [[ "${CASE}" == "edit" ]]; then
+    if [[ "${CASE}" == "edit" ]]; then
     GT_PATH="${ROOT}/verifier/hidden/edit_ground_truth.json"
+    MANIFEST_PATH="${ROOT}/cases/${DIR}/fixtures/source_manifest.json"
     if [ -f "${GT_PATH}" ]; then
         python3 "${ROOT}/cases/${DIR}/verify_video_${CASE}.py" \
             --output-dir "${RUN_DIR}" \
             --constraints "${ROOT}/cases/${DIR}/fixtures/expected_constraints.json" \
             --result-dir "${RUN_DIR}" \
-            --ground-truth "${GT_PATH}" 2>&1
+            --ground-truth "${GT_PATH}" \
+            --fixture-manifest "${MANIFEST_PATH}" 2>&1
     else
         echo "[ERROR] hidden ground truth not found at ${GT_PATH}" >&2
         echo "VERIFIER_ERROR" > "${RUN_DIR}/verifier_status.txt"

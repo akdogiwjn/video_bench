@@ -1,28 +1,14 @@
 {
-  "description": "EDIT fixture V3 source manifest. Auto-generated from actual files. All asset_ids unique.",
-  "version": 3,
+  "description": "EDIT fixture V3.1 manifest. Reference JPGs moved to evidence/fixture_generation/. Agent-visible candidates: 6 videos + 1 image + 4 distractors.",
+  "version": "3.1",
   "source_materials": [
-    {
-      "asset_id": "source_001_image",
-      "type": "image",
-      "file": "source_001.jpg",
-      "sha256": "fd6affacbae8728d4acdb4f51c56834f328e8316aa7cd4f45a1441cabb8e499c",
-      "duration_ms": 0
-    },
     {
       "asset_id": "source_001_video",
       "type": "video",
       "file": "source_001.mp4",
       "sha256": "be72c5edaab420636f6f2bb76587a5a85bf40860b8ed369198b65f8991633f30",
       "duration_ms": 32735,
-      "has_audio": true
-    },
-    {
-      "asset_id": "source_002_image",
-      "type": "image",
-      "file": "source_002.jpg",
-      "sha256": "73dd7c51bd22f3c769977664662901f8ba7b943325ecabac268c1b94a8358525",
-      "duration_ms": 0
+      "role": "candidate"
     },
     {
       "asset_id": "source_002_video",
@@ -30,14 +16,7 @@
       "file": "source_002.mp4",
       "sha256": "d9b5ec0a064bc26c07c1d99028c7412c6bf519dddc74f886b0d9e76b847cc338",
       "duration_ms": 14000,
-      "has_audio": true
-    },
-    {
-      "asset_id": "source_003_image",
-      "type": "image",
-      "file": "source_003.jpg",
-      "sha256": "2e76d2335c834801f49abd938a8537fdbf37cb6ec77e911689230cec811da945",
-      "duration_ms": 0
+      "role": "candidate"
     },
     {
       "asset_id": "source_003_video",
@@ -45,14 +24,7 @@
       "file": "source_003.mp4",
       "sha256": "18a1f4bd6057b977dfa42996a4dfa1fe9c1b37b7960bacf116318181fe1b9453",
       "duration_ms": 50000,
-      "has_audio": true
-    },
-    {
-      "asset_id": "source_004_image",
-      "type": "image",
-      "file": "source_004.jpg",
-      "sha256": "df3c252687a125a887e504e538b9c84adea4c04259671b548dff97a7f80d8a5d",
-      "duration_ms": 0
+      "role": "candidate"
     },
     {
       "asset_id": "source_004_video",
@@ -60,14 +32,7 @@
       "file": "source_004.mp4",
       "sha256": "8a8affb7d7e3851ab585ad7582f6c8af3e4617df94ce1ae05785d9bd2cb32152",
       "duration_ms": 40000,
-      "has_audio": true
-    },
-    {
-      "asset_id": "source_005_image",
-      "type": "image",
-      "file": "source_005.jpg",
-      "sha256": "3d48cb9ad5bc6e5c5faa38449cb5e39ff80cd2edf8fd7abe4a40b75f7327f7f6",
-      "duration_ms": 0
+      "role": "candidate"
     },
     {
       "asset_id": "source_005_video",
@@ -75,14 +40,15 @@
       "file": "source_005.mp4",
       "sha256": "57fcee7ba78f7833d4e2ab91d18794718b0bc7aa8211d0863f08cc952c050ebe",
       "duration_ms": 60000,
-      "has_audio": true
+      "role": "candidate"
     },
     {
       "asset_id": "source_006_image",
       "type": "image",
       "file": "source_006.jpg",
       "sha256": "8a12a04678d993e762bd926db2434535bd42e2e3b2c4eda3878adbef6e05b827",
-      "duration_ms": 0
+      "duration_ms": 0,
+      "role": "candidate"
     },
     {
       "asset_id": "source_006_video",
@@ -90,7 +56,7 @@
       "file": "source_006.mp4",
       "sha256": "6c788f5f0e257e7fbac5a3e17e53399d6b69b5d02716fca800910002e2476f14",
       "duration_ms": 60000,
-      "has_audio": true
+      "role": "candidate"
     }
   ],
   "derived_materials": [
@@ -135,5 +101,7 @@
   ],
   "total_source_video_duration_ms": 256735,
   "total_source_video_duration_min": 4.3,
-  "fixture_version": 3
+  "agent_visible_candidates": 11,
+  "fixture_version": 3.1,
+  "reference_images_location": "evidence/fixture_generation/ (not visible to agent)"
 }

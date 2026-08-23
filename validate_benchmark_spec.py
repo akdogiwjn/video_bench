@@ -12,6 +12,7 @@ Checks:
 - Skill SHA256 referenced
 """
 import json
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -109,6 +110,29 @@ def main():
     bf = pricing.get("budget_freeze", {})
     check("gen" in bf, f"budget_freeze missing 'gen' key, has: {list(bf.keys())}")
     check("edit" in bf, f"budget_freeze missing 'edit' key, has: {list(bf.keys())}")
+
+    # 11. Hidden GT fixture_version == manifest fixture_version
+    gt = load_json(ROOT / "verifier/hidden/edit_ground_truth.json")
+    check(gt.get("fixture_version") == manifest.get("fixture_version"),
+          f"GT fixture_version ({gt.get('fixture_version')}) != manifest ({manifest.get('fixture_version')})")
+
+    # 12. GT distractor IDs ⊆ manifest asset IDs
+    manifest_asset_ids = set(s.get("asset_id", "") for s in manifest.get("source_materials", []) + manifest.get("derived_materials", []))
+    gt_distractor_ids = set(gt.get("distractor_asset_ids", []))
+    for did in gt_distractor_ids:
+        check(did in manifest_asset_ids, f"GT distractor ID '{did}' not in manifest asset_ids")
+
+    # 13. GT valid IDs ⊆ manifest asset IDs
+    gt_valid_ids = set(gt.get("valid_video_asset_ids", []) + gt.get("valid_image_asset_ids", []))
+    for vid in gt_valid_ids:
+        check(vid in manifest_asset_ids, f"GT valid ID '{vid}' not in manifest asset_ids")
+
+    # 14. manifest SHA256 == actual file SHA256 (spot check first 3)
+    for item in manifest.get("source_materials", [])[:3]:
+        f = media_dir / item.get("file", "")
+        if f.exists() and "sha256" in item:
+            actual_sha = hashlib.sha256(f.read_bytes()).hexdigest()
+            check(item["sha256"] == actual_sha, f"SHA mismatch: {item.get('file')} manifest={item['sha256'][:16]} actual={actual_sha[:16]}")
 
     # Report
     if ERRORS:

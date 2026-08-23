@@ -5,6 +5,10 @@ ROOT="/home/lcq/video_agent/video_bench"
 source "${ROOT}/config.env"
 export DASHSCOPE_API_KEY DEEPSEEK_API_KEY LLM_API_KEY VLM_API_KEY
 
+# #5 fix: validate before running
+echo "[INFO] Running benchmark spec validation..."
+python3 "${ROOT}/validate_benchmark_spec.py" || { echo "[ERROR] Benchmark spec validation failed. Aborting." >&2; exit 1; }
+
 RESULTS_DIR="${ROOT}/results/formal_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "${RESULTS_DIR}"
 
@@ -94,10 +98,14 @@ for d in sorted(r.iterdir()):
         l2 = json.loads(l2_path.read_text()) if l2_path.exists() else {}
         tw = json.loads(tw_path.read_text()) if tw_path.exists() else {}
         rs = json.loads(rs_path.read_text()) if rs_path.exists() else {}
+        bp_path = case_dir / 'budget_report.json'
+        bp = json.loads(bp_path.read_text()) if bp_path.exists() else {}
         runs.append({
             'run': d.name,
             'case_id': case_dir.name,
             'hard_pass': bv.get('hard_pass', False),
+            'budget_pass': bp.get('budget_pass', None),
+            'overall_pass': bv.get('hard_pass', False) and bp.get('budget_pass', True),
             'l0': bv.get('L0_pass', False),
             'l1': bv.get('L1_pass', False),
             'l2_score': l2.get('semantic_score'),
@@ -112,14 +120,18 @@ edit_scores = [r['l2_score'] for r in edit if r['l2_score'] is not None]
 
 def stats(run_list, scores):
     n_runs = len(run_list)
-    n_pass = sum(1 for r in run_list if r['hard_pass'])
+    n_pass = sum(1 for r in run_list if r.get('overall_pass'))
+    n_hard = sum(1 for r in run_list if r.get('hard_pass'))
+    n_budget = sum(1 for r in run_list if r.get('budget_pass') is True)
     if not scores:
         return {'count': n_runs, 'success_rate': f'{n_pass}/{n_runs}', 'l2_available': 0}
     s = sorted(scores)
     n = len(s)
     return {
         'count': n_runs,
-        'success_rate': f'{n_pass}/{n_runs}',
+        'overall_pass_rate': f'{n_pass}/{n_runs}',
+        'hard_pass_rate': f'{n_hard}/{n_runs}',
+        'budget_pass_rate': f'{n_budget}/{n_runs}',
         'l2_available': n,
         'l2_missing': n_runs - n,
         'l2_median': s[n//2],

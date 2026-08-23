@@ -1,6 +1,9 @@
 {
   "case_id": "SUB-CPU-VIDEO-EDIT-01",
-  "description": "Hidden ground truth for EDIT verifier V2. Not mounted into agent workspace. Only accessible to host-side verifier.",
+  "description": "Hidden ground truth for EDIT verifier V3. Not mounted into agent workspace. Only accessible to host-side verifier.",
+  "fixture_version": 3.1,
+  "valid_video_asset_ids": ["source_001_video", "source_002_video", "source_003_video", "source_004_video", "source_005_video", "source_006_video"],
+  "valid_image_asset_ids": ["source_006_image"],
   "distractor_asset_ids": ["derived_001", "derived_002", "derived_003", "derived_004"],
   "distractor_purposes": {
     "derived_001": "duplicate_distractor",
@@ -8,19 +11,14 @@
     "derived_003": "low_bitrate_distractor",
     "derived_004": "irrelevant_distractor"
   },
-  "valid_source_asset_ids": ["source_001", "source_002", "source_003", "source_004", "source_005", "source_006"],
-  "talking_head_source_ids": ["source_001", "source_002"],
-  "broll_source_ids": ["source_003", "source_004", "source_005"],
-  "image_source_ids": ["source_006"],
+  "talking_head_video_ids": ["source_001_video", "source_002_video"],
+  "broll_video_ids": ["source_003_video", "source_004_video", "source_005_video", "source_006_video"],
+  "total_source_video_duration_ms": 256735,
+  "total_source_video_duration_min": 4.3,
+  "talking_head_count": 2,
+  "broll_count": 4,
   "expected_topic_evidence": {
     "keywords": ["garden", "plant", "urban", "growing", "coffee", "community"],
-    "description": "Source materials are about urban gardening and community gardens. Talking-head videos contain Chinese speech about gardening. B-roll shows environment details."
-  },
-  "narrative_order_hint": {
-    "description": "Natural narrative: talking-head intro (source_001) → B-roll environment (source_003) → B-roll detail (source_004) → talking-head conclusion (source_002) → B-roll outro (source_005). Not strictly required but helps verify narrative coherence."
-  },
-  "fixture_version": 2,
-  "total_source_duration_ms": 166736,
-  "talking_head_count": 2,
-  "broll_count": 3
+    "description": "Source materials are about urban gardening and community gardens. Talking-head videos contain Chinese speech about gardening."
+  }
 }

@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 """SUB-CPU-VIDEO-EDIT-01 verifier: L0 + L1 layers for agentic material-based video editing.
 
-Fixes:
-- #25: 9:16 aspect ratio check (not just short_side >= 720)
-- #26: BGM verification (from select_bgm_result or timeline)
-- #27: Subtitle verification (SRT non-empty + format check)
-- #28: Timeline verifier (source_ref valid, start < end, duration alignment, min sources)
+V4 fixes:
+- #2: Provenance mapping uses manifest as single source of truth (path → asset_id → distractor check)
+- #6: BGM init order fixed; video/audio clips separated for duration alignment
 """
 from __future__ import annotations
 
@@ -46,13 +44,10 @@ def check_aspect_ratio(w: int, h: int) -> dict:
 
 
 def is_valid_srt(path: Path) -> bool:
-    """Check that SRT file is non-empty and has valid SRT format."""
     if not path.exists() or path.stat().st_size < 10:
         return False
     try:
         content = path.read_text(encoding="utf-8", errors="replace").strip()
-        # SRT format: index, timestamp range, text — repeated
-        # Check for at least one timestamp pattern
         return bool(re.search(r"\d{2}:\d{2}:\d{2},\d{3}\s*-->\s*\d{2}:\d{2}:\d{2},\d{3}", content))
     except OSError:
         return False
@@ -71,19 +66,17 @@ def check_l0(output_dir: Path) -> dict:
             "passed": data is not None,
         }
 
-    # Real shot segmentation check (#12 fix): at least one source has >=2 segments
+    # Real shot segmentation: at least one source has >=2 segments (#12 fix)
     seg_data = load_json_safe(output_dir / "shot_segments.json")
     real_split = False
     if seg_data is not None:
         segments = seg_data if isinstance(seg_data, list) else seg_data.get("clips", seg_data.get("segments", []))
         if isinstance(segments, list):
-            # Group by media_id
             by_source = {}
             for seg in segments:
                 sr = seg.get("source_ref", {}) if isinstance(seg, dict) else {}
                 mid = sr.get("media_id", "unknown")
                 by_source.setdefault(mid, []).append(seg)
-            # At least one source has >=2 segments with internal boundaries
             for mid, segs in by_source.items():
                 if len(segs) >= 2:
                     real_split = True
@@ -99,21 +92,19 @@ def check_l0(output_dir: Path) -> dict:
     return checks
 
 
-def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, final_duration: float) -> dict:
-    """Enhanced timeline verification (#28)."""
-    checks = {}
-    tl_data = load_json_safe(output_dir / "timeline.json")
+def build_provenance_map(output_dir: Path, fixture_manifest: dict | None) -> dict:
+    """Build path → fixture asset_id mapping using manifest as single source of truth (#2 fix)."""
+    path_to_asset = {}
     
-    if tl_data is None:
-        checks["timeline_exists"] = {"passed": False}
-        checks["timeline_valid"] = {"passed": False}
-        checks["multiple_sources"] = {"passed": False, "source_count": 0}
-        checks["distractor_excluded"] = {"passed": True, "uses_distractor": False}
-        checks["bgm_present"] = {"passed": False}
-        return checks
+    # From fixture manifest: file → asset_id
+    if fixture_manifest:
+        for item in fixture_manifest.get("source_materials", []) + fixture_manifest.get("derived_materials", []):
+            fname = item.get("file", "")
+            aid = item.get("asset_id", "")
+            if fname and aid:
+                path_to_asset[fname] = aid
 
-    # Build provenance mapping (#13 fix): fixture asset_id → openstoryline media_id
-    asset_to_media = {}
+    # From media_inventory: OpenStoryline media_id → orig_path → fixture file
     inv_data = load_json_safe(output_dir / "media_inventory.json")
     if inv_data is not None:
         inv_list = inv_data if isinstance(inv_data, list) else inv_data.get("media", inv_data.get("result", {}).get("media", []))
@@ -122,136 +113,172 @@ def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, fina
                 if isinstance(m, dict):
                     mid = m.get("media_id", "")
                     orig_path = m.get("orig_path", "")
-                    # Map fixture filename → media_id
                     if orig_path:
-                        asset_to_media[orig_path] = mid
+                        fname = Path(orig_path).name
+                        if fname in path_to_asset:
+                            path_to_asset[mid] = path_to_asset[fname]
+    
+    return path_to_asset
 
-    # Check timeline using provenance mapping
-    clips = []
-    if isinstance(tl_data, list):
-        clips = tl_data
-    elif isinstance(tl_data, dict):
-        # Try standard keys
-        for key in ("clips", "segments"):
-            if key in tl_data and isinstance(tl_data[key], list):
-                clips = tl_data[key]
-                break
-        # Try "tracks" structure: tracks.video / tracks.bgm etc.
-        if not clips and "tracks" in tl_data:
-            tracks = tl_data["tracks"]
-            if isinstance(tracks, dict):
-                for track_name, track_data in tracks.items():
-                    if isinstance(track_data, list):
-                        clips.extend(track_data)
-                    elif isinstance(track_data, dict) and "clips" in track_data:
-                        clips.extend(track_data["clips"])
-                    # BGM track
-                    if track_name in ("bgm", "music"):
-                        has_bgm = True
 
-    checks["timeline_exists"] = {"passed": True}
+def extract_clip_source_info(clip: dict, path_to_asset: dict) -> tuple[str, float, float]:
+    """Extract (logical_asset_id, start, end) from a timeline clip."""
+    if not isinstance(clip, dict):
+        return "", 0, 0
+    
+    # Try source_path first, then path, then orig_path
+    source_path = clip.get("source_path", "") or clip.get("path", "") or clip.get("orig_path", "")
+    
+    # Map to logical asset_id
+    asset_id = ""
+    if source_path:
+        fname = Path(source_path).name
+        asset_id = path_to_asset.get(fname, "")
+        if not asset_id:
+            # Try matching by substring
+            for manifest_file, manifest_aid in path_to_asset.items():
+                if manifest_file in source_path or fname == manifest_file:
+                    asset_id = manifest_aid
+                    break
+    
+    # Get start/end from source_ref or source_window
+    sr = clip.get("source_ref", {})
+    if not sr:
+        sw = clip.get("source_window", {})
+        sr = {"start": sw.get("start"), "end": sw.get("end")}
+    
+    s = sr.get("start")
+    e = sr.get("end")
+    
+    return asset_id, s if s is not None else 0, e if e is not None else 0
 
-    valid_clips = 0
-    source_files = set()
-    distractor_ids = set(ground_truth.get("distractor_asset_ids", []))
-    uses_distractor = False
+
+def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, final_duration: float, fixture_manifest: dict | None) -> dict:
+    """Enhanced timeline verification with proper provenance (#2 fix)."""
+    checks = {}
+    tl_data = load_json_safe(output_dir / "timeline.json")
+    
+    if tl_data is None:
+        for name in ["timeline_exists", "timeline_valid", "multiple_sources", "distractor_excluded", "bgm_present"]:
+            checks[name] = {"passed": False}
+        return checks
+
+    # Build provenance map from manifest (#2 fix)
+    path_to_asset = build_provenance_map(output_dir, fixture_manifest)
+    
+    # Separate clips by track type (#6 fix)
+    video_clips = []
+    all_clips = []
     has_bgm = False
     bgm_valid = False
+    
+    if isinstance(tl_data, list):
+        all_clips = tl_data
+    elif isinstance(tl_data, dict):
+        # Standard keys
+        for key in ("clips", "segments"):
+            if key in tl_data and isinstance(tl_data[key], list):
+                all_clips = tl_data[key]
+                break
+        # Tracks structure: separate video/bgm/subtitle
+        if not all_clips and "tracks" in tl_data:
+            tracks = tl_data["tracks"]
+            if isinstance(tracks, dict):
+                video_clips = tracks.get("video", []) if isinstance(tracks.get("video"), list) else []
+                bgm_track = tracks.get("bgm", tracks.get("music", []))
+                if isinstance(bgm_track, list) and len(bgm_track) > 0:
+                    has_bgm = True
+                sub_track = tracks.get("subtitles", [])
+                if isinstance(sub_track, list):
+                    all_clips = video_clips + sub_track
+                else:
+                    all_clips = video_clips
+            else:
+                all_clips = []
+    
+    checks["timeline_exists"] = {"passed": True}
+    
+    # Validate video clips
+    valid_clips = 0
+    logical_source_ids = set()
+    distractor_ids = set(ground_truth.get("distractor_asset_ids", []))
+    uses_distractor = False
     negative_ts = False
-
-    for clip in clips:
-        if not isinstance(clip, dict):
-            continue
-        # Try source_ref first, then source_path/source_window (OpenStoryline format)
-        sr = clip.get("source_ref", {})
-        if not sr:
-            sw = clip.get("source_window", {})
-            if sw:
-                sr = {"start": sw.get("start"), "end": sw.get("end")}
-        media_id = sr.get("media_id", "") or clip.get("clip_id", "")
-        # Use source_path for provenance check
-        source_path = clip.get("source_path", "") or clip.get("path", "")
-        orig_path = clip.get("orig_path", "") or clip.get("path", "")
-        s = sr.get("start") or clip.get("source_window", {}).get("start")
-        e = sr.get("end") or clip.get("source_window", {}).get("end")
-
+    
+    for clip in video_clips if video_clips else all_clips:
+        asset_id, s, e = extract_clip_source_info(clip, path_to_asset)
+        
         if s is not None and e is not None:
             if s < 0 or e < 0:
                 negative_ts = True
             elif e > s:
                 valid_clips += 1
-
-        if media_id or source_path or orig_path:
-            source_files.add(media_id or source_path or orig_path)
-            # Check if this clip maps to a distractor via provenance
-            check_val = orig_path or source_path or media_id
-            for asset_id, mid in asset_to_media.items():
-                if mid == check_val or asset_id in str(check_val):
-                    if asset_id in distractor_ids:
-                        uses_distractor = True
-
-        # BGM check (#14 fix): only count explicit bgm, not any audio
-        if clip.get("kind") == "bgm" or clip.get("type") == "bgm" or \
-           "bgm" in str(clip.get("path", "")).lower() or \
-           "bgm" in str(clip.get("source", "")).lower():
-            has_bgm = True
-
-    # Also check bgm.json for BGM (#14) — OpenStoryline writes bgm.json
+        
+        if asset_id:
+            logical_source_ids.add(asset_id)
+            if asset_id in distractor_ids:
+                uses_distractor = True
+    
+    # Also check bgm.json for BGM
     bgm_file = load_json_safe(output_dir / "bgm.json")
-    if bgm_file is not None and not has_bgm:
+    if bgm_file is not None:
         bgm_entry = bgm_file.get("bgm", {})
         if isinstance(bgm_entry, dict) and bgm_entry.get("path"):
             bgm_valid = True
-
+    # Also check select_bgm_result
+    bgm_result = load_json_safe(output_dir / "select_bgm_result.json")
+    if bgm_result is not None and not bgm_valid:
+        bgm = bgm_result.get("bgm", bgm_result.get("result", {}).get("bgm", {}))
+        if isinstance(bgm, dict) and bgm.get("path"):
+            bgm_valid = True
+    
     checks["timeline_valid"] = {
-        "clip_count": len(clips),
+        "video_clip_count": len(video_clips) if video_clips else len(all_clips),
         "valid_clips": valid_clips,
         "has_negative_timestamps": negative_ts,
         "passed": valid_clips > 0 and not negative_ts,
     }
-
+    
     min_sources = constraints.get("min_source_files_used", 3)
     checks["multiple_sources"] = {
-        "source_count": len(source_files),
+        "source_count": len(logical_source_ids),
+        "source_ids": list(logical_source_ids),
         "min_required": min_sources,
-        "passed": len(source_files) >= min_sources,
+        "passed": len(logical_source_ids) >= min_sources,
     }
-
+    
     checks["distractor_excluded"] = {
         "distractor_ids": list(distractor_ids),
         "uses_distractor": uses_distractor,
-        "provenance_mapping": len(asset_to_media) > 0,
+        "provenance_mapping_count": len(path_to_asset),
         "passed": not uses_distractor,
     }
-
+    
     checks["bgm_present"] = {
         "found_in_timeline": has_bgm,
         "found_in_bgm_result": bgm_valid,
         "passed": has_bgm or bgm_valid,
     }
-
-    # Timeline duration vs final duration alignment
+    
+    # Timeline duration alignment (only video clips, #6 fix)
     tl_duration = 0
-    for clip in clips:
-        if isinstance(clip, dict):
-            sr = clip.get("source_ref", {})
-            s = sr.get("start", 0) or 0
-            e = sr.get("end", 0) or 0
-            if e > s:
-                tl_duration += (e - s)
+    for clip in video_clips if video_clips else all_clips:
+        _, s, e = extract_clip_source_info(clip, path_to_asset)
+        if e > s:
+            tl_duration += (e - s)
     if final_duration > 0 and tl_duration > 0:
         diff_pct = abs(tl_duration / 1000 - final_duration) / final_duration
         checks["timeline_duration_alignment"] = {
             "timeline_duration_s": round(tl_duration / 1000, 1),
             "final_duration_s": round(final_duration, 1),
             "diff_pct": round(diff_pct * 100, 1),
-            "passed": diff_pct < 0.3,  # within 30%
+            "passed": diff_pct < 0.3,
         }
-
+    
     return checks
 
 
-def check_l1(output_dir: Path, constraints: dict, ground_truth: dict) -> dict:
+def check_l1(output_dir: Path, constraints: dict, ground_truth: dict, fixture_manifest: dict | None) -> dict:
     final = output_dir / "final.mp4"
     checks = {}
     if not final.exists():
@@ -266,10 +293,7 @@ def check_l1(output_dir: Path, constraints: dict, ground_truth: dict) -> dict:
 
     duration = float(fmt.get("duration", 0))
     min_dur, max_dur = constraints.get("duration_range_seconds", [55, 65])
-    checks["duration"] = {
-        "actual": round(duration, 1), "min": min_dur, "max": max_dur,
-        "passed": min_dur <= duration <= max_dur,
-    }
+    checks["duration"] = {"actual": round(duration, 1), "min": min_dur, "max": max_dur, "passed": min_dur <= duration <= max_dur}
     checks["video_stream"] = {"exists": len(video_streams) > 0, "passed": len(video_streams) > 0}
     checks["audio_stream"] = {"exists": len(audio_streams) > 0, "passed": len(audio_streams) > 0}
 
@@ -278,38 +302,23 @@ def check_l1(output_dir: Path, constraints: dict, ground_truth: dict) -> dict:
         w = int(vs.get("width", 0))
         h = int(vs.get("height", 0))
         short_side = min(w, h)
-        min_res = constraints.get("min_resolution_short_side", 720)
-        checks["resolution"] = {
-            "width": w, "height": h, "short_side": short_side,
-            "min_required": min_res, "passed": short_side >= min_res,
-        }
+        checks["resolution"] = {"width": w, "height": h, "short_side": short_side, "min_required": 720, "passed": short_side >= 720}
         checks["aspect_ratio_9_16"] = check_aspect_ratio(w, h)
 
-    # Subtitle verification (#27): check srt OR subtitle track in timeline
-    tl_data_sub = load_json_safe(output_dir / "timeline.json")
+    # Subtitle: srt or timeline subtitle track
+    tl_data = load_json_safe(output_dir / "timeline.json")
     subtitle_streams = [s for s in streams if s.get("codec_type") == "subtitle"]
-    srt_paths = [output_dir / "final.srt", output_dir / "subtitles.srt"]
-    srt_valid = any(is_valid_srt(p) for p in srt_paths)
-    # Also check if timeline has subtitle track
+    srt_valid = any(is_valid_srt(p) for p in [output_dir / "final.srt", output_dir / "subtitles.srt"])
     subtitle_in_timeline = False
-    if isinstance(tl_data_sub, dict) and "tracks" in tl_data_sub:
-        tracks = tl_data_sub["tracks"]
+    if isinstance(tl_data, dict) and "tracks" in tl_data:
+        tracks = tl_data["tracks"]
         if isinstance(tracks, dict) and "subtitles" in tracks:
             sub_track = tracks["subtitles"]
-            if isinstance(sub_track, list) and len(sub_track) > 0:
-                subtitle_in_timeline = True
-            elif isinstance(sub_track, dict) and sub_track:
-                subtitle_in_timeline = True
-    checks["subtitle"] = {
-        "stream_exists": len(subtitle_streams) > 0,
-        "srt_valid": srt_valid,
-        "subtitle_in_timeline": subtitle_in_timeline,
-        "passed": len(subtitle_streams) > 0 or srt_valid or subtitle_in_timeline,
-    }
+            subtitle_in_timeline = isinstance(sub_track, list) and len(sub_track) > 0
+    checks["subtitle"] = {"stream_exists": len(subtitle_streams) > 0, "srt_valid": srt_valid, "subtitle_in_timeline": subtitle_in_timeline,
+                          "passed": len(subtitle_streams) > 0 or srt_valid or subtitle_in_timeline}
 
-    # Timeline + BGM + distractor checks (#26, #28)
-    checks.update(check_timeline(output_dir, constraints, ground_truth, duration))
-
+    checks.update(check_timeline(output_dir, constraints, ground_truth, duration, fixture_manifest))
     checks["file_size"] = {"bytes": final.stat().st_size, "passed": final.stat().st_size > 51200}
     return checks
 
@@ -319,6 +328,7 @@ def main():
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--constraints", required=True)
     parser.add_argument("--ground-truth", default="")
+    parser.add_argument("--fixture-manifest", default="")
     parser.add_argument("--result-dir", required=True)
     args = parser.parse_args()
 
@@ -329,10 +339,14 @@ def main():
     if args.ground_truth and Path(args.ground_truth).exists():
         with open(args.ground_truth) as f:
             ground_truth = json.load(f)
+    fixture_manifest = None
+    if args.fixture_manifest and Path(args.fixture_manifest).exists():
+        with open(args.fixture_manifest) as f:
+            fixture_manifest = json.load(f)
     result_dir = Path(args.result_dir)
 
     l0 = check_l0(output_dir)
-    l1 = check_l1(output_dir, constraints, ground_truth)
+    l1 = check_l1(output_dir, constraints, ground_truth, fixture_manifest)
 
     l0_required = ["media_inventory.json", "shot_segments.json", "asr_transcript.json",
                    "clip_captions.json", "selection_and_groups.json", "script.json", "timeline.json"]
