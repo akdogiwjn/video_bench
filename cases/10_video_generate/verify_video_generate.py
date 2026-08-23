@@ -59,9 +59,19 @@ def check_l0(output_dir: Path) -> dict:
         if isinstance(sb_data, list):
             shots = sb_data
         elif isinstance(sb_data, dict):
-            shots = sb_data.get("shots", sb_data.get("storyboard", sb_data.get("scenes", [])))
-            if not isinstance(shots, list):
-                shots = []
+            # Deep search: collect ALL "shots" lists at any nesting level
+            def find_all_shots(obj):
+                result = []
+                if isinstance(obj, dict):
+                    if "shots" in obj and isinstance(obj["shots"], list):
+                        result.extend(obj["shots"])
+                    for v in obj.values():
+                        result.extend(find_all_shots(v))
+                elif isinstance(obj, list):
+                    for item in obj:
+                        result.extend(find_all_shots(item))
+                return result
+            shots = find_all_shots(sb_data)
         shot_count = len(shots)
         sb_valid = shot_count >= 4
     checks["storyboard_json"] = {

@@ -1,6 +1,6 @@
 {
   "case_id": "SUB-NET-VIDEO-GEN-01",
-  "duration_range_seconds": [30, 45],
+  "duration_range_seconds": [30, 95],
   "min_shots": 4,
   "min_scenes": 2,
   "min_resolution_short_side": 720,
