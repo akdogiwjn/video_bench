@@ -66,22 +66,19 @@ def check_l0(output_dir: Path) -> dict:
             "passed": data is not None,
         }
 
-    # Real shot segmentation: at least one source has >=2 segments (#12 fix)
+    # #4 fix: renamed from real_shot_segmentation — verifies execution, not TransNetV2 boundary detection
     seg_data = load_json_safe(output_dir / "shot_segments.json")
-    real_split = False
+    seg_executed = False
     if seg_data is not None:
         segments = seg_data if isinstance(seg_data, list) else seg_data.get("clips", seg_data.get("segments", []))
-        if isinstance(segments, list):
+        if isinstance(segments, list) and len(segments) > 0:
             by_source = {}
             for seg in segments:
                 sr = seg.get("source_ref", {}) if isinstance(seg, dict) else {}
                 mid = sr.get("media_id", "unknown")
                 by_source.setdefault(mid, []).append(seg)
-            for mid, segs in by_source.items():
-                if len(segs) >= 2:
-                    real_split = True
-                    break
-    checks["real_shot_segmentation"] = {"verified": real_split, "passed": real_split}
+            seg_executed = len(by_source) > 0 and len(segments) > 0
+    checks["shot_segmentation_executed"] = {"verified": seg_executed, "passed": seg_executed}
 
     final = output_dir / "final.mp4"
     checks["final_render"] = {
@@ -256,9 +253,9 @@ def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, fina
     
     checks["bgm_present"] = {
         "found_in_timeline": has_bgm,
-        "found_in_bgm_result": bgm_valid,
+        "bgm_selected": bgm_valid,
         "final_audio_not_silent": audio_not_silent,
-        "passed": (has_bgm or bgm_valid) and audio_not_silent,
+        "passed": has_bgm and audio_not_silent,
     }
     
     # Timeline duration alignment (ONLY video clips, using timeline_window #6 fix)
@@ -304,24 +301,23 @@ def check_l1(output_dir: Path, constraints: dict, ground_truth: dict, fixture_ma
     checks["video_stream"] = {"exists": len(video_streams) > 0, "passed": len(video_streams) > 0}
     checks["audio_stream"] = {"exists": len(audio_streams) > 0, "passed": len(audio_streams) > 0}
 
-    # #5 fix: check audio is not completely silent (silencedetect)
+    # #1 fix: real silencedetect with d=1, silence_ratio < 0.95
     audio_not_silent = False
     if len(audio_streams) > 0:
         result = subprocess.run(
-            ["ffmpeg", "-i", str(final), "-af", "silencedetect=d=60:noise=-50dB", "-f", "null", "-"],
+            ["ffmpeg", "-i", str(final), "-af", "silencedetect=noise=-50dB:d=1", "-f", "null", "-"],
             capture_output=True, text=True, timeout=120,
         )
-        # If silencedetect reports no silence spanning the whole video, audio has content
         stderr = result.stderr
-        # Count silence segments — if there's any non-silence, the audio is useful
-        audio_not_silent = "silence_start" not in stderr or len(audio_streams) > 0
-        # More robust: check if duration of silence < total duration
-        if "silence_duration" in stderr:
-            audio_not_silent = True  # has silence detection means there IS audio
-        else:
-            # No silence detected at all → either all loud or all silent
-            # Check if there's any audio data at all
-            audio_not_silent = len(audio_streams) > 0
+        silences = re.findall(r"silence_duration: ([\d.]+)", stderr)
+        total_silence = sum(float(s) for s in silences) if silences else 0
+        silence_ratio = total_silence / duration if duration > 0 else 1.0
+        audio_not_silent = silence_ratio < 0.95
+        checks["audio_not_silent"] = {
+            "total_silence_s": round(total_silence, 2),
+            "silence_ratio": round(silence_ratio, 3),
+            "passed": audio_not_silent,
+        }
 
     if video_streams:
         vs = video_streams[0]
@@ -331,18 +327,14 @@ def check_l1(output_dir: Path, constraints: dict, ground_truth: dict, fixture_ma
         checks["resolution"] = {"width": w, "height": h, "short_side": short_side, "min_required": 720, "passed": short_side >= 720}
         checks["aspect_ratio_9_16"] = check_aspect_ratio(w, h)
 
-    # Subtitle: srt or timeline subtitle track
-    tl_data = load_json_safe(output_dir / "timeline.json")
+    # #3 fix: subtitle hard gate = stream OR valid srt (not timeline planning)
     subtitle_streams = [s for s in streams if s.get("codec_type") == "subtitle"]
     srt_valid = any(is_valid_srt(p) for p in [output_dir / "final.srt", output_dir / "subtitles.srt"])
-    subtitle_in_timeline = False
-    if isinstance(tl_data, dict) and "tracks" in tl_data:
-        tracks = tl_data["tracks"]
-        if isinstance(tracks, dict) and "subtitles" in tracks:
-            sub_track = tracks["subtitles"]
-            subtitle_in_timeline = isinstance(sub_track, list) and len(sub_track) > 0
-    checks["subtitle"] = {"stream_exists": len(subtitle_streams) > 0, "srt_valid": srt_valid, "subtitle_in_timeline": subtitle_in_timeline,
-                          "passed": len(subtitle_streams) > 0 or srt_valid or subtitle_in_timeline}
+    checks["subtitle"] = {
+        "stream_exists": len(subtitle_streams) > 0,
+        "srt_valid": srt_valid,
+        "passed": len(subtitle_streams) > 0 or srt_valid,
+    }
 
     checks.update(check_timeline(output_dir, constraints, ground_truth, duration, fixture_manifest))
     checks["file_size"] = {"bytes": final.stat().st_size, "passed": final.stat().st_size > 51200}
@@ -377,7 +369,7 @@ def main():
     l0_required = ["media_inventory.json", "shot_segments.json", "asr_transcript.json",
                    "clip_captions.json", "selection_and_groups.json", "script.json", "timeline.json"]
     l0_pass = all(l0.get(n, {}).get("passed", False) for n in l0_required) and \
-              l0.get("real_shot_segmentation", {}).get("passed", False) and \
+              l0.get("shot_segmentation_executed", {}).get("passed", False) and \
               l0.get("final_render", {}).get("passed", False)
     l1_pass = all(c.get("passed", False) for c in l1.values()) if l1 else False
 

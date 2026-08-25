@@ -30,7 +30,11 @@ RUN_TS=$(date +%s)
 SESSION_KEY="agent:main:${CASE_ID}-${RUN_TS}"
 
 TASK_WINDOW_START=$(date +%s.%N)
-openclaw agent --local --agent main --session-key "${SESSION_KEY}" --timeout "${TIMEOUT}" --model deepseek/deepseek-v4-flash --message "$(cat /workspace/task.prompt)" --json > /workspace/output/openclaw_agent.stdout.json 2> /workspace/output/openclaw_agent.stderr.log || true
+set +e
+openclaw agent --local --agent main --session-key "${SESSION_KEY}" --timeout "${TIMEOUT}" --model deepseek/deepseek-v4-flash --message "$(cat /workspace/task.prompt)" --json > /workspace/output/openclaw_agent.stdout.json 2> /workspace/output/openclaw_agent.stderr.log
+AGENT_RC=$?
+set -e
+echo "${AGENT_RC}" > /workspace/output/agent_exit_code.txt
 TASK_WINDOW_END=$(date +%s.%N)
 
 python3 -c "import json; print(json.dumps({'case_id':'${CASE_ID}','start_epoch':${TASK_WINDOW_START},'end_epoch':${TASK_WINDOW_END},'duration_seconds':round(${TASK_WINDOW_END}-${TASK_WINDOW_START},3)}))" > /workspace/output/task_window.json
