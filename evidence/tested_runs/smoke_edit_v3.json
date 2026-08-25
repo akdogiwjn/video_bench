@@ -10,14 +10,25 @@
   "l0_pass": true,
   "l1_pass": true,
   "l2_score": 1.0,
-  "l2_scores": {"brief_adherence": 4, "narrative_coherence": 4, "material_selection_quality": 4, "editing_continuity": 4, "subtitle_visual_quality": 4},
+  "l2_scores": {
+    "brief_adherence": 4,
+    "narrative_coherence": 4,
+    "material_selection_quality": 4,
+    "editing_continuity": 4,
+    "subtitle_visual_quality": 4
+  },
   "task_wall_time_s": 1577.7,
   "final_duration_s": 55.8,
   "final_resolution": "720x1280",
   "aspect_ratio": "9:16",
   "timeline_video_clips": 7,
   "source_count": 4,
-  "source_ids": ["source_001_video", "source_002_video", "source_003_video", "source_004_video"],
+  "source_ids": [
+    "source_001_video",
+    "source_002_video",
+    "source_003_video",
+    "source_004_video"
+  ],
   "distractor_excluded": true,
   "distractor_count": 4,
   "provenance_mapping_count": 22,
@@ -25,5 +36,7 @@
   "subtitle_in_timeline": true,
   "timeline_duration_alignment": 0.0,
   "brief_provided_to_judge": true,
-  "rubric_version": "v3-no-audio"
+  "rubric_version": "v3-no-audio",
+  "superseded": true,
+  "superseded_reason": "Replaced by v4: silencedetect + audio_not_silent BGM gate + SRT generation from timeline + shot_segmentation_executed"
 }

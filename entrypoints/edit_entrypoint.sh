@@ -58,3 +58,37 @@ print(d.get('output_path', d.get('result', {}).get('output_path', '')))
     fi
 fi
 echo "[INFO] outputs collected"
+
+# Generate final.srt from timeline subtitles if not already present
+if [ ! -f /workspace/output/final.srt ] && [ -f /workspace/output/timeline.json ]; then
+    python3 -c "
+import json, re
+from pathlib import Path
+
+def ms_to_srt_time(ms):
+    h = ms // 3600000
+    m = (ms % 3600000) // 60000
+    s = (ms % 60000) // 1000
+    f = ms % 1000
+    return f'{h:02d}:{m:02d}:{s:02d},{f:03d}'
+
+tl = json.loads(Path('/workspace/output/timeline.json').read_text())
+tracks = tl.get('tracks', {}) if isinstance(tl, dict) else {}
+subs = tracks.get('subtitles', [])
+if isinstance(subs, list) and subs:
+    lines = []
+    for i, sub in enumerate(subs, 1):
+        tw = sub.get('timeline_window', {})
+        start = tw.get('start', 0)
+        end = tw.get('end', 0)
+        text = sub.get('text', '')
+        if text and end > start:
+            lines.append(str(i))
+            lines.append(f'{ms_to_srt_time(start)} --> {ms_to_srt_time(end)}')
+            lines.append(text)
+            lines.append('')
+    if lines:
+        Path('/workspace/output/final.srt').write_text('\n'.join(lines), encoding='utf-8')
+        print(f'[INFO] final.srt generated ({len(subs)} subtitles)')
+" 2>/dev/null
+fi

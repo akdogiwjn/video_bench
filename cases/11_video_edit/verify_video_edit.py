@@ -150,7 +150,7 @@ def extract_clip_source_info(clip: dict, path_to_asset: dict) -> tuple[str, floa
     return asset_id, s if s is not None else 0, e if e is not None else 0
 
 
-def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, final_duration: float, fixture_manifest: dict | None) -> dict:
+def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, final_duration: float, fixture_manifest: dict | None, audio_not_silent: bool = False) -> dict:
     """Enhanced timeline verification with proper provenance (#2 fix)."""
     checks = {}
     tl_data = load_json_safe(output_dir / "timeline.json")
@@ -336,7 +336,7 @@ def check_l1(output_dir: Path, constraints: dict, ground_truth: dict, fixture_ma
         "passed": len(subtitle_streams) > 0 or srt_valid,
     }
 
-    checks.update(check_timeline(output_dir, constraints, ground_truth, duration, fixture_manifest))
+    checks.update(check_timeline(output_dir, constraints, ground_truth, duration, fixture_manifest, audio_not_silent))
     checks["file_size"] = {"bytes": final.stat().st_size, "passed": final.stat().st_size > 51200}
     return checks
 
