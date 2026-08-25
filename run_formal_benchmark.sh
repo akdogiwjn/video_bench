@@ -104,8 +104,8 @@ for d in sorted(r.iterdir()):
             'run': d.name,
             'case_id': case_dir.name,
             'hard_pass': bv.get('hard_pass', False),
-            'budget_pass': bp.get('budget_pass', None),
-            'overall_pass': bv.get('hard_pass', False) and bp.get('budget_pass', True),
+            'budget_pass': bp.get('budget_pass') is True,
+            'overall_pass': bv.get('hard_pass', False) and (bp.get('budget_pass') is True),
             'l0': bv.get('L0_pass', False),
             'l1': bv.get('L1_pass', False),
             'l2_score': l2.get('semantic_score'),
@@ -119,12 +119,13 @@ gen_scores = [r['l2_score'] for r in gen if r['l2_score'] is not None]
 edit_scores = [r['l2_score'] for r in edit if r['l2_score'] is not None]
 
 def stats(run_list, scores):
+    from statistics import median
     n_runs = len(run_list)
     n_pass = sum(1 for r in run_list if r.get('overall_pass'))
     n_hard = sum(1 for r in run_list if r.get('hard_pass'))
     n_budget = sum(1 for r in run_list if r.get('budget_pass') is True)
     if not scores:
-        return {'count': n_runs, 'success_rate': f'{n_pass}/{n_runs}', 'l2_available': 0}
+        return {'count': n_runs, 'overall_pass_rate': f'{n_pass}/{n_runs}', 'hard_pass_rate': f'{n_hard}/{n_runs}', 'budget_pass_rate': f'{n_budget}/{n_runs}', 'l2_available': 0}
     s = sorted(scores)
     n = len(s)
     return {
@@ -134,7 +135,7 @@ def stats(run_list, scores):
         'budget_pass_rate': f'{n_budget}/{n_runs}',
         'l2_available': n,
         'l2_missing': n_runs - n,
-        'l2_median': s[n//2],
+        'l2_median': round(median(s), 4),
         'l2_min': min(s),
         'l2_max': max(s),
         'l2_mean': round(sum(s)/n, 4),

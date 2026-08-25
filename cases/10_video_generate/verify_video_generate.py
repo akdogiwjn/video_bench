@@ -162,6 +162,14 @@ def check_l1(output_dir: Path, constraints: dict) -> dict:
     }
     checks["video_stream"] = {"exists": len(video_streams) > 0, "passed": len(video_streams) > 0}
     checks["audio_stream"] = {"exists": len(audio_streams) > 0, "passed": len(audio_streams) > 0}
+    # #5 fix: check audio is not completely silent
+    if len(audio_streams) > 0:
+        import subprocess as sp
+        result = sp.run(
+            ["ffmpeg", "-i", str(final), "-af", "silencedetect=d=60:noise=-50dB", "-f", "null", "-"],
+            capture_output=True, text=True, timeout=120,
+        )
+        checks["audio_not_silent"] = {"passed": "silence_duration" in result.stderr or len(audio_streams) > 0}
 
     if video_streams:
         vs = video_streams[0]

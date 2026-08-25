@@ -134,6 +134,17 @@ def main():
             actual_sha = hashlib.sha256(f.read_bytes()).hexdigest()
             check(item["sha256"] == actual_sha, f"SHA mismatch: {item.get('file')} manifest={item['sha256'][:16]} actual={actual_sha[:16]}")
 
+    # 15. EDIT brief source counts match manifest
+    video_sources = [s for s in manifest.get("source_materials", []) if s.get("type") == "video"]
+    image_sources = [s for s in manifest.get("source_materials", []) if s.get("type") == "image"]
+    check(len(video_sources) >= 6, f"EDIT: expected >=6 video sources, got {len(video_sources)}")
+    check(len(image_sources) >= 1, f"EDIT: expected >=1 image source, got {len(image_sources)}")
+    check(len(manifest.get("derived_materials", [])) == 4, f"EDIT: expected 4 distractors, got {len(manifest.get('derived_materials', []))}")
+
+    # 16. GT source counts match manifest
+    check(gt.get("talking_head_count") == 2, f"GT talking_head_count: {gt.get('talking_head_count')}")
+    check(gt.get("broll_count") == len(gt.get("broll_video_ids", [])), f"GT broll_count mismatch")
+
     # Report
     if ERRORS:
         print(f"[FAIL] {len(ERRORS)} validation errors:")

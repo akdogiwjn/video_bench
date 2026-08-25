@@ -7,5 +7,5 @@
   "narrative_goal": "Tell a coherent story about urban gardening from heterogeneous source materials, including talking-head segments with Chinese speech and B-roll of environments",
   "must_include": ["subtitle", "background music", "multiple source clips", "coherent narrative"],
   "must_avoid": ["distractor clips (duplicate/blurred/low-bitrate/reversed)", "simple concatenation without selection", "horizontal aspect ratio"],
-  "source_materials": "4.3 minutes of heterogeneous footage: 2 talking-head (Chinese speech), 3 B-roll (AI-generated images), 1 image. Plus 4 distractor materials."
+  "source_materials": "4.3 minutes of heterogeneous footage: 2 talking-head (Chinese speech), 4 B-roll (AI-generated images), 1 image. Plus 4 distractor materials."
 }

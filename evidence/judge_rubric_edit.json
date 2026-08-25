@@ -30,15 +30,15 @@
       }
     },
     {
-      "name": "material_selection_quality",
-      "description": "Did the agent select appropriate clips from the source material? Were distractor/low-quality clips excluded? Were the best moments included?",
+      "name": "content_relevance_and_variety",
+      "description": "Does the final video show content relevant to the editing brief? Is there sufficient visual variety across clips? Are there any obviously irrelevant or low-quality segments visible? (Judge only evaluates what it can see in the final video — not the selection process itself, which is verified deterministically in L1.)",
       "scale": "0-4",
       "anchors": {
-        "4": "Excellent selection; distractors excluded, best moments included, diverse sources used.",
-        "3": "Good selection; one suboptimal inclusion or exclusion.",
-        "2": "Several poor choices; distractors included or best moments missed.",
-        "1": "Mostly poor selection; random clips chosen.",
-        "0": "No usable video or all clips from single source."
+        "4": "All content is relevant to the brief; excellent visual variety; no low-quality segments.",
+        "3": "Content is mostly relevant; minor variety or quality issues.",
+        "2": "Some irrelevant content or limited variety.",
+        "1": "Much content irrelevant to brief or low quality.",
+        "0": "No usable video or entirely irrelevant."
       }
     },
     {

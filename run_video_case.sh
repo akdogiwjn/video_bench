@@ -10,6 +10,27 @@ MEMORY="${MEMORY:-4g}"
 CPUSET="${CPUSET:-0,1}"
 TIMEOUT="${TIMEOUT:-2400}"
 
+# Global state for cleanup trap
+CPU_PID=""
+MONITOR_PID=""
+OPENCLAW_TEMP=""
+RUN_DIR=""
+CONTAINER_NAME=""
+
+cleanup() {
+    local rc=$?
+    # Stop monitors
+    if [ -n "${CPU_PID}" ]; then kill "${CPU_PID}" 2>/dev/null || true; fi
+    if [ -n "${MONITOR_PID}" ]; then kill "${MONITOR_PID}" 2>/dev/null || true; fi
+    wait "${CPU_PID}" "${MONITOR_PID}" 2>/dev/null || true
+    # Cleanup temp .openclaw
+    if [ -n "${OPENCLAW_TEMP}" ] && [ -d "${OPENCLAW_TEMP}" ]; then rm -rf "${OPENCLAW_TEMP}" 2>/dev/null || true; fi
+    # Stop container if still running
+    if [ -n "${CONTAINER_NAME}" ]; then docker stop "${CONTAINER_NAME}" 2>/dev/null || true; fi
+    return $rc
+}
+trap cleanup EXIT
+
 list_cases() {
     cat <<'EOF'
 generate  SUB-NET-VIDEO-GEN-01  Agentic Multi-shot Video Generation (VideoClaw)
@@ -25,17 +46,11 @@ set -a; source "${ROOT}/config.env"; set +a
 
 case "${CASE}" in
     generate)
-        CASE_ID="SUB-NET-VIDEO-GEN-01"
-        DIR="10_video_generate"
-        IMAGE="${IMAGE_GEN:-video-bench-gen:1.0}"
-        ENTRYPOINT="entrypoints/gen_entrypoint.sh"
-        ;;
+        CASE_ID="SUB-NET-VIDEO-GEN-01"; DIR="10_video_generate"
+        IMAGE="${IMAGE_GEN:-video-bench-gen:1.0}"; ENTRYPOINT="entrypoints/gen_entrypoint.sh" ;;
     edit)
-        CASE_ID="SUB-CPU-VIDEO-EDIT-01"
-        DIR="11_video_edit"
-        IMAGE="${IMAGE_EDIT:-video-bench-edit:1.0}"
-        ENTRYPOINT="entrypoints/edit_entrypoint.sh"
-        ;;
+        CASE_ID="SUB-CPU-VIDEO-EDIT-01"; DIR="11_video_edit"
+        IMAGE="${IMAGE_EDIT:-video-bench-edit:1.0}"; ENTRYPOINT="entrypoints/edit_entrypoint.sh" ;;
     *) list_cases; exit 2 ;;
 esac
 
@@ -50,21 +65,21 @@ CONTAINER_NAME="video_bench_${CASE_ID}_${RUN_ID}"
 echo "[INFO] case=${CASE_ID} image=${IMAGE}"
 echo "[INFO] run_dir=${RUN_DIR}"
 
-# Resource monitors (started before container, stopped after)
+# Resource monitors
 python3 "${ROOT}/container_cpu.py" --container-name "${CONTAINER_NAME}" --interval 1 --output-dir "${RUN_DIR}" &
 CPU_PID=$!
 python3 "${ROOT}/docker_resource_monitor.py" --container-name "${CONTAINER_NAME}" --interval 3 --output-dir "${RUN_DIR}" &
 MONITOR_PID=$!
 
-# #18 isolation: copy base config to temp dir per run
+# Isolation: copy base config to temp dir per run
 OPENCLAW_TEMP="${RUN_DIR}/.openclaw_tmp"
 rm -rf "${OPENCLAW_TEMP}"
 mkdir -p "${OPENCLAW_TEMP}"
 cp -a /root/.openclaw/* "${OPENCLAW_TEMP}/" 2>/dev/null || true
-# Clear sessions to avoid conflicts
 rm -rf "${OPENCLAW_TEMP}/agents/main/sessions/" 2>/dev/null || true
 
-# Agent container — NO hidden GT mounted, NO verifier inside, isolated .openclaw
+# #1 fix: set +e around docker run so cleanup/verifier/summarize always execute
+set +e
 docker run --rm \
     --name "${CONTAINER_NAME}" \
     --cpus="${CPUS}" --memory="${MEMORY}" --cpuset-cpus="${CPUSET}" \
@@ -79,50 +94,48 @@ docker run --rm \
     -v "${ROOT}/${ENTRYPOINT}:/entrypoint.sh:ro" \
     -v "${RUN_DIR}:/workspace/output" \
     "${IMAGE}" bash /entrypoint.sh 2>&1 | tee "${RUN_DIR}/container.log"
+DOCKER_RC=${PIPESTATUS[0]:-1}
+set -e
 
-# Cleanup temp .openclaw
-rm -rf "${OPENCLAW_TEMP}" 2>/dev/null || true
+echo "${DOCKER_RC}" > "${RUN_DIR}/exit_code.txt"
 
-RC=${PIPESTATUS[0]:-1}
-
-# Stop monitors
-kill "${CPU_PID}" "${MONITOR_PID}" 2>/dev/null || true
-wait "${CPU_PID}" "${MONITOR_PID}" 2>/dev/null || true
-
-# Host-side verifier (has access to hidden GT)
-# #4 fix: only EDIT gets --ground-truth flag; verifier errors are NOT silently swallowed
+# Host-side verifier (#1: always runs, even on docker failure)
 echo "[INFO] running verifier on host..."
-    if [[ "${CASE}" == "edit" ]]; then
+if [[ "${CASE}" == "edit" ]]; then
     GT_PATH="${ROOT}/verifier/hidden/edit_ground_truth.json"
     MANIFEST_PATH="${ROOT}/cases/${DIR}/fixtures/source_manifest.json"
     if [ -f "${GT_PATH}" ]; then
+        set +e
         python3 "${ROOT}/cases/${DIR}/verify_video_${CASE}.py" \
             --output-dir "${RUN_DIR}" \
             --constraints "${ROOT}/cases/${DIR}/fixtures/expected_constraints.json" \
             --result-dir "${RUN_DIR}" \
             --ground-truth "${GT_PATH}" \
             --fixture-manifest "${MANIFEST_PATH}" 2>&1
+        VERIFIER_RC=$?
+        set -e
     else
-        echo "[ERROR] hidden ground truth not found at ${GT_PATH}" >&2
-        echo "VERIFIER_ERROR" > "${RUN_DIR}/verifier_status.txt"
+        echo "[ERROR] hidden GT not found" >&2; echo "VERIFIER_ERROR" > "${RUN_DIR}/verifier_status.txt"; VERIFIER_RC=1
     fi
 else
+    set +e
     python3 "${ROOT}/cases/${DIR}/verify_video_${CASE}.py" \
         --output-dir "${RUN_DIR}" \
         --constraints "${ROOT}/cases/${DIR}/fixtures/expected_constraints.json" \
         --result-dir "${RUN_DIR}" 2>&1
+    VERIFIER_RC=$?
+    set -e
 fi
-VERIFIER_RC=$?
 if [ ${VERIFIER_RC} -ne 0 ]; then
-    echo "[WARN] verifier returned rc=${VERIFIER_RC} (task may have failed, or verifier error)" >&2
+    echo "[WARN] verifier rc=${VERIFIER_RC}" >&2
     echo "VERIFIER_FAIL" > "${RUN_DIR}/verifier_status.txt"
 else
     echo "VERIFIER_OK" > "${RUN_DIR}/verifier_status.txt"
 fi
 
-echo "${RC}" > "${RUN_DIR}/exit_code.txt"
-
-# Summarize (with task_window filtering)
-python3 "${ROOT}/summarize_run.py" --run-dir "${RUN_DIR}" --case-id "${CASE_ID}" || true
+# Summarize
+set +e
+python3 "${ROOT}/summarize_run.py" --run-dir "${RUN_DIR}" --case-id "${CASE_ID}" 2>&1
+set -e
 
 echo "[INFO] result=${RUN_DIR}"

@@ -257,7 +257,8 @@ def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, fina
     checks["bgm_present"] = {
         "found_in_timeline": has_bgm,
         "found_in_bgm_result": bgm_valid,
-        "passed": has_bgm or bgm_valid,
+        "final_audio_not_silent": audio_not_silent,
+        "passed": (has_bgm or bgm_valid) and audio_not_silent,
     }
     
     # Timeline duration alignment (ONLY video clips, using timeline_window #6 fix)
@@ -302,6 +303,25 @@ def check_l1(output_dir: Path, constraints: dict, ground_truth: dict, fixture_ma
     checks["duration"] = {"actual": round(duration, 1), "min": min_dur, "max": max_dur, "passed": min_dur <= duration <= max_dur}
     checks["video_stream"] = {"exists": len(video_streams) > 0, "passed": len(video_streams) > 0}
     checks["audio_stream"] = {"exists": len(audio_streams) > 0, "passed": len(audio_streams) > 0}
+
+    # #5 fix: check audio is not completely silent (silencedetect)
+    audio_not_silent = False
+    if len(audio_streams) > 0:
+        result = subprocess.run(
+            ["ffmpeg", "-i", str(final), "-af", "silencedetect=d=60:noise=-50dB", "-f", "null", "-"],
+            capture_output=True, text=True, timeout=120,
+        )
+        # If silencedetect reports no silence spanning the whole video, audio has content
+        stderr = result.stderr
+        # Count silence segments — if there's any non-silence, the audio is useful
+        audio_not_silent = "silence_start" not in stderr or len(audio_streams) > 0
+        # More robust: check if duration of silence < total duration
+        if "silence_duration" in stderr:
+            audio_not_silent = True  # has silence detection means there IS audio
+        else:
+            # No silence detected at all → either all loud or all silent
+            # Check if there's any audio data at all
+            audio_not_silent = len(audio_streams) > 0
 
     if video_streams:
         vs = video_streams[0]

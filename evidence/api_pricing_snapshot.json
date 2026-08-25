@@ -41,8 +41,7 @@
     "gen": {
       "max_video_api_calls": 8,
       "max_image_api_calls": 8,
-      "max_tts_api_calls": 2,
-      "max_retry_per_stage": 1
+      "max_tts_api_calls": 2
     },
     "edit": {
       "max_llm_calls": 20,
