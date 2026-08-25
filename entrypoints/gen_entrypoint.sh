@@ -56,10 +56,14 @@ echo "[INFO] agent completed"
 find /opt/videoclaw/backend/code/result -name "*.mp4" -newer /workspace/task.prompt 2>/dev/null | while read f; do
     cp "$f" /workspace/output/ 2>/dev/null || true
 done
-for name in script storyboard; do
-    found=$(find /opt/videoclaw/backend/code/result -name "*${name}*" -name "*.json" -newer /workspace/task.prompt 2>/dev/null | head -1)
-    [ -n "${found}" ] && cp "${found}" /workspace/output/${name}.json 2>/dev/null || true
-done
+
+# Copy script and storyboard from backend result directories
+find /opt/videoclaw/backend/code/result -name "script*" -name "*.json" -newer /workspace/task.prompt 2>/dev/null | head -1 | while read f; do cp "$f" /workspace/output/script.json 2>/dev/null; done
+find /opt/videoclaw/backend/code/result -name "storyboard*" -name "*.json" -newer /workspace/task.prompt 2>/dev/null | head -1 | while read f; do cp "$f" /workspace/output/storyboard.json 2>/dev/null; done
+# Also try session-specific script/storyboard dirs
+find /opt/videoclaw/backend/code/result/script -name "*.json" -newer /workspace/task.prompt 2>/dev/null | head -1 | while read f; do cp "$f" /workspace/output/script.json 2>/dev/null; done
+find /opt/videoclaw/backend/code/result/storyboard -name "*.json" -newer /workspace/task.prompt 2>/dev/null | head -1 | while read f; do cp "$f" /workspace/output/storyboard.json 2>/dev/null; done
+
 mkdir -p /workspace/output/reference_images /workspace/output/video_clips
 find /opt/videoclaw/backend/code/result/image -name "*.png" -newer /workspace/task.prompt 2>/dev/null | head -10 | while read f; do cp "$f" /workspace/output/reference_images/ 2>/dev/null; done
 find /opt/videoclaw/backend/code/result/video -name "*.mp4" -newer /workspace/task.prompt 2>/dev/null | head -10 | while read f; do cp "$f" /workspace/output/video_clips/ 2>/dev/null; done
