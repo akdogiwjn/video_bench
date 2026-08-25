@@ -26,6 +26,7 @@ echo "[INFO] adapters ready"
 # 3. Run agent
 export PYTHONPATH=/opt/openstoryline:/opt/openstoryline/src
 mkdir -p /workspace/output
+touch /tmp/video_bench_run_start.marker
 RUN_TS=$(date +%s)
 SESSION_KEY="agent:main:${CASE_ID}-${RUN_TS}"
 
@@ -41,6 +42,7 @@ python3 -c "import json; print(json.dumps({'case_id':'${CASE_ID}','start_epoch':
 echo "[INFO] agent completed"
 
 # 4. Collect outputs (canonicalization only — NO re-encoding, NO upscale)
+MARKER="/tmp/video_bench_run_start.marker"
 RENDER_RESULT="/workspace/output/render_video_result.json"
 if [ -f "${RENDER_RESULT}" ]; then
     RENDER_PATH=$(python3 -c "
@@ -51,9 +53,28 @@ print(d.get('output_path', d.get('result', {}).get('output_path', '')))
 " 2>/dev/null || echo "")
     if [ -n "${RENDER_PATH}" ] && [ -f "${RENDER_PATH}" ]; then
         cp "${RENDER_PATH}" /workspace/output/final.mp4
+        # Record canonicalization provenance
+        python3 -c "
+import hashlib, json
+from pathlib import Path
+src = Path('${RENDER_PATH}')
+dst = Path('/workspace/output/final.mp4')
+src_sha = hashlib.sha256(src.read_bytes()).hexdigest()
+dst_sha = hashlib.sha256(dst.read_bytes()).hexdigest()
+prov = {
+    'source': str(src),
+    'destination': str(dst),
+    'source_sha256': src_sha,
+    'final_sha256': dst_sha,
+    'sha256_match': src_sha == dst_sha,
+    'canonicalization_only': True,
+}
+Path('/workspace/output/render_provenance.json').write_text(json.dumps(prov, indent=2))
+print(f'[INFO] final.mp4 copied, sha256_match={src_sha == dst_sha}')
+" 2>/dev/null
         echo "[INFO] final.mp4 copied"
     else
-        FOUND=$(find /opt/openstoryline/.storyline -name "output_*.mp4" -newer /workspace/task.prompt 2>/dev/null | head -1)
+        FOUND=$(find /opt/openstoryline/.storyline -name "output_*.mp4" -newer "${MARKER}" 2>/dev/null | head -1)
         [ -n "${FOUND}" ] && cp "${FOUND}" /workspace/output/final.mp4 && echo "[INFO] final.mp4 found via search"
     fi
 fi

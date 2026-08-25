@@ -185,6 +185,11 @@ def run_adapter(adapter_name: str, node_factory, process_fn_name: str, inputs: d
         if hasattr(node, 'meta'):
             evidence["upstream_symbol"] = type(node).__name__
             evidence["upstream_node_id"] = getattr(node.meta, 'node_id', '')
+        # Record device for CPU workload evidence (SplitShotsNode → TransNetV2 → device)
+        if hasattr(node, 'server_cfg'):
+            cfg = node.server_cfg
+            if hasattr(cfg, 'split_shots') and hasattr(cfg.split_shots, 'transnet_device'):
+                evidence["device"] = cfg.split_shots.transnet_device
         evidence_path = output_path / f"{adapter_name}_execution.json"
         evidence_path.write_text(json.dumps(evidence, indent=2, ensure_ascii=False), encoding="utf-8")
 

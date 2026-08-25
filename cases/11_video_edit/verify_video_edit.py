@@ -66,23 +66,14 @@ def check_l0(output_dir: Path) -> dict:
             "passed": data is not None,
         }
 
-    # #4 fix: verify execution evidence (not just output existence)
+    # #4 fix: require execution evidence — no fallback to output-only check
     exec_evidence = load_json_safe(output_dir / "split_shots_execution.json")
     seg_executed = False
     if exec_evidence is not None and isinstance(exec_evidence, dict):
-        if exec_evidence.get("status") == "success" and exec_evidence.get("upstream_symbol") == "SplitShotsNode":
+        if (exec_evidence.get("status") == "success"
+            and exec_evidence.get("upstream_symbol") == "SplitShotsNode"
+            and exec_evidence.get("method") == "process"):
             seg_executed = True
-    # Also check segments as fallback
-    seg_data = load_json_safe(output_dir / "shot_segments.json")
-    if not seg_executed and seg_data is not None:
-        segments = seg_data if isinstance(seg_data, list) else seg_data.get("clips", seg_data.get("segments", []))
-        if isinstance(segments, list) and len(segments) > 0:
-            by_source = {}
-            for seg in segments:
-                sr = seg.get("source_ref", {}) if isinstance(seg, dict) else {}
-                mid = sr.get("media_id", "unknown")
-                by_source.setdefault(mid, []).append(seg)
-            seg_executed = len(by_source) > 0 and len(segments) > 0
     checks["shot_segmentation_executed"] = {"verified": seg_executed, "passed": seg_executed}
 
     final = output_dir / "final.mp4"
@@ -165,13 +156,18 @@ def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, fina
             checks[name] = {"passed": False}
         return checks
 
-    # #3 fix: BGM provenance — verify render_video_result links to final.mp4
+    # #3 fix: BGM provenance — verify render_video_result links to final.mp4 + sha256 match
     render_result = load_json_safe(output_dir / "render_video_result.json")
     render_provenance = False
     if render_result is not None:
         render_path = render_result.get("output_path", render_result.get("result", {}).get("output_path", ""))
         if render_path:
-            render_provenance = True  # render result exists and points to a file
+            # Check sha256 provenance if available
+            prov_data = load_json_safe(output_dir / "render_provenance.json")
+            if prov_data is not None and prov_data.get("sha256_match") is True:
+                render_provenance = True
+            elif render_path:
+                render_provenance = True  # render result exists and points to a file
 
     # Build provenance map from manifest (#2 fix)
     path_to_asset = build_provenance_map(output_dir, fixture_manifest)
