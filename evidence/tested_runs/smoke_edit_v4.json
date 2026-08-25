@@ -10,7 +10,13 @@
   "l0_pass": true,
   "l1_pass": true,
   "l2_score": 1.0,
-  "l2_scores": {"brief_adherence": 4, "narrative_coherence": 4, "content_relevance_and_variety": 4, "editing_continuity": 4, "subtitle_visual_quality": 4},
+  "l2_scores": {
+    "brief_adherence": 4,
+    "narrative_coherence": 4,
+    "content_relevance_and_variety": 4,
+    "editing_continuity": 4,
+    "subtitle_visual_quality": 4
+  },
   "task_wall_time_s": 1800.0,
   "final_duration_s": 62.1,
   "final_resolution": "720x1280",
@@ -28,5 +34,7 @@
   "subtitle_count": 45,
   "timeline_duration_alignment_pct": 0.0,
   "brief_provided_to_judge": true,
-  "rubric_version": "v3-no-audio"
+  "rubric_version": "v3-no-audio",
+  "superseded": true,
+  "superseded_reason": "Replaced by v5: removed SRT auto-gen (benchmark integrity), added exec evidence + BGM provenance + run marker"
 }
