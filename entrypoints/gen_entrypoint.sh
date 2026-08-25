@@ -38,6 +38,7 @@ echo "[INFO] backend healthy"
 
 # 3. Run agent
 mkdir -p /workspace/output
+touch /tmp/video_bench_run_start.marker
 RUN_TS=$(date +%s)
 SESSION_KEY="agent:main:${CASE_ID}-${RUN_TS}"
 
@@ -52,25 +53,26 @@ TASK_WINDOW_END=$(date +%s.%N)
 python3 -c "import json; print(json.dumps({'case_id':'${CASE_ID}','start_epoch':${TASK_WINDOW_START},'end_epoch':${TASK_WINDOW_END},'duration_seconds':round(${TASK_WINDOW_END}-${TASK_WINDOW_START},3)}))" > /workspace/output/task_window.json
 echo "[INFO] agent completed"
 
-# 4. Collect outputs (canonicalization only — NO re-encoding, NO upscale)
-find /opt/videoclaw/backend/code/result -name "*.mp4" -newer /workspace/task.prompt 2>/dev/null | while read f; do
+# 4. Collect outputs — only files newer than run marker (#5 fix)
+MARKER="/tmp/video_bench_run_start.marker"
+find /opt/videoclaw/backend/code/result -name "*.mp4" -newer "${MARKER}" 2>/dev/null | while read f; do
     cp "$f" /workspace/output/ 2>/dev/null || true
 done
 
 # Copy script and storyboard from backend result directories (also check subdirectories)
 for search_dir in /opt/videoclaw/backend/code/result /workspace/output; do
     if [ ! -f /workspace/output/script.json ]; then
-        find "${search_dir}" -name "script.json" -newer /workspace/task.prompt 2>/dev/null | head -1 | while read f; do cp "$f" /workspace/output/script.json 2>/dev/null; done
+        find "${search_dir}" -name "script.json" -newer "${MARKER}" 2>/dev/null | head -1 | while read f; do cp "$f" /workspace/output/script.json 2>/dev/null; done
     fi
     if [ ! -f /workspace/output/storyboard.json ]; then
-        find "${search_dir}" -name "storyboard.json" -newer /workspace/task.prompt 2>/dev/null | head -1 | while read f; do cp "$f" /workspace/output/storyboard.json 2>/dev/null; done
+        find "${search_dir}" -name "storyboard.json" -newer "${MARKER}" 2>/dev/null | head -1 | while read f; do cp "$f" /workspace/output/storyboard.json 2>/dev/null; done
     fi
 done
 
 mkdir -p /workspace/output/reference_images /workspace/output/video_clips
-find /opt/videoclaw/backend/code/result/image -name "*.png" -newer /workspace/task.prompt 2>/dev/null | head -10 | while read f; do cp "$f" /workspace/output/reference_images/ 2>/dev/null; done
-find /opt/videoclaw/backend/code/result/video -name "*.mp4" -newer /workspace/task.prompt 2>/dev/null | head -10 | while read f; do cp "$f" /workspace/output/video_clips/ 2>/dev/null; done
-FINAL_MP4=$(find /opt/videoclaw/backend/code/result -name "*.mp4" -newer /workspace/task.prompt -exec ls -S {} + 2>/dev/null | head -1)
+find /opt/videoclaw/backend/code/result/image -name "*.png" -newer "${MARKER}" 2>/dev/null | head -10 | while read f; do cp "$f" /workspace/output/reference_images/ 2>/dev/null; done
+find /opt/videoclaw/backend/code/result/video -name "*.mp4" -newer "${MARKER}" 2>/dev/null | head -10 | while read f; do cp "$f" /workspace/output/video_clips/ 2>/dev/null; done
+FINAL_MP4=$(find /opt/videoclaw/backend/code/result -name "*.mp4" -newer "${MARKER}" -exec ls -S {} + 2>/dev/null | head -1)
 [ -n "${FINAL_MP4}" ] && [ -f "${FINAL_MP4}" ] && cp "${FINAL_MP4}" /workspace/output/final.mp4
 echo "[INFO] outputs collected"
 

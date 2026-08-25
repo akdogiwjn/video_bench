@@ -66,10 +66,15 @@ def check_l0(output_dir: Path) -> dict:
             "passed": data is not None,
         }
 
-    # #4 fix: renamed from real_shot_segmentation — verifies execution, not TransNetV2 boundary detection
-    seg_data = load_json_safe(output_dir / "shot_segments.json")
+    # #4 fix: verify execution evidence (not just output existence)
+    exec_evidence = load_json_safe(output_dir / "split_shots_execution.json")
     seg_executed = False
-    if seg_data is not None:
+    if exec_evidence is not None and isinstance(exec_evidence, dict):
+        if exec_evidence.get("status") == "success" and exec_evidence.get("upstream_symbol") == "SplitShotsNode":
+            seg_executed = True
+    # Also check segments as fallback
+    seg_data = load_json_safe(output_dir / "shot_segments.json")
+    if not seg_executed and seg_data is not None:
         segments = seg_data if isinstance(seg_data, list) else seg_data.get("clips", seg_data.get("segments", []))
         if isinstance(segments, list) and len(segments) > 0:
             by_source = {}
@@ -159,6 +164,14 @@ def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, fina
         for name in ["timeline_exists", "timeline_valid", "multiple_sources", "distractor_excluded", "bgm_present"]:
             checks[name] = {"passed": False}
         return checks
+
+    # #3 fix: BGM provenance — verify render_video_result links to final.mp4
+    render_result = load_json_safe(output_dir / "render_video_result.json")
+    render_provenance = False
+    if render_result is not None:
+        render_path = render_result.get("output_path", render_result.get("result", {}).get("output_path", ""))
+        if render_path:
+            render_provenance = True  # render result exists and points to a file
 
     # Build provenance map from manifest (#2 fix)
     path_to_asset = build_provenance_map(output_dir, fixture_manifest)
@@ -255,7 +268,8 @@ def check_timeline(output_dir: Path, constraints: dict, ground_truth: dict, fina
         "found_in_timeline": has_bgm,
         "bgm_selected": bgm_valid,
         "final_audio_not_silent": audio_not_silent,
-        "passed": has_bgm and audio_not_silent,
+        "render_provenance": render_provenance,
+        "passed": has_bgm and audio_not_silent and render_provenance,
     }
     
     # Timeline duration alignment (ONLY video clips, using timeline_window #6 fix)

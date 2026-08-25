@@ -103,7 +103,11 @@ python3 /opt/video-tools/render_video.py --timeline '<json>' --output-dir '<dir>
 
 1. **Agent decides the order**: This skill does not prescribe E1→E2→E3. The agent must choose which tools to call based on the task and intermediate results.
 2. **Preserve intermediate artifacts**: Every tool's JSON output must be saved to `/workspace/output/`.
-3. **Use real tools, not pass-through**: Some upstream nodes have a `default_process` that skips real computation. The CLI adapters always call the real `process()` method. The verifier checks actual output.
+3. **Subtitle delivery**: The final video must include subtitles. You can deliver subtitles as either:
+   - A subtitle stream embedded in final.mp4, OR
+   - A sidecar file `/workspace/output/final.srt` (standard SRT format with timestamps)
+   You must generate the SRT file yourself if using the sidecar approach. Do not rely on the benchmark harness to generate it for you.
+4. **Use real tools, not pass-through**: Some upstream nodes have a `default_process` that skips real computation. The CLI adapters always call the real `process()` method. The verifier checks actual output.
 4. **VLM and LLM configuration**: The OpenStoryline config.toml `[llm]` points to DeepSeek (OpenAI-compatible), `[vlm]` points to qwen-vl-max via DashScope. L2 judge also uses qwen-vl-max.
 5. **CPU-only**: TransNetV2 runs on CPU by upstream default config. Do not attempt to use GPU.
 6. **Do not install packages or download data during the task**

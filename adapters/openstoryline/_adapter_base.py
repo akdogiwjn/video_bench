@@ -173,12 +173,31 @@ def run_adapter(adapter_name: str, node_factory, process_fn_name: str, inputs: d
         result = asyncio.run(getattr(node, process_fn_name)(node_state, inputs))
         result_path = output_path / f"{adapter_name}_result.json"
         result_path.write_text(json.dumps(result, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+
+        # #4 fix: write execution evidence
+        evidence = {
+            "tool": adapter_name,
+            "method": process_fn_name,
+            "status": "success",
+            "result_file": str(result_path),
+        }
+        # Add upstream symbol info if available
+        if hasattr(node, 'meta'):
+            evidence["upstream_symbol"] = type(node).__name__
+            evidence["upstream_node_id"] = getattr(node.meta, 'node_id', '')
+        evidence_path = output_path / f"{adapter_name}_execution.json"
+        evidence_path.write_text(json.dumps(evidence, indent=2, ensure_ascii=False), encoding="utf-8")
+
         print(json.dumps({"status": "success", "result_file": str(result_path), "result": result}, indent=2, ensure_ascii=False, default=str))
         return 0
     except Exception as e:
         error_info = {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
         error_path = output_path / f"{adapter_name}_error.json"
         error_path.write_text(json.dumps(error_info, indent=2, ensure_ascii=False), encoding="utf-8")
+        # Still write execution evidence with error status
+        evidence = {"tool": adapter_name, "method": process_fn_name, "status": "error", "error": str(e)[:200]}
+        evidence_path = output_path / f"{adapter_name}_execution.json"
+        evidence_path.write_text(json.dumps(evidence, indent=2, ensure_ascii=False), encoding="utf-8")
         print(json.dumps(error_info, indent=2, ensure_ascii=False), file=sys.stderr)
         return 1
 
