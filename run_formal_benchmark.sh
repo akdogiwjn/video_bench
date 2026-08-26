@@ -105,7 +105,8 @@ for d in sorted(r.iterdir()):
             'case_id': case_dir.name,
             'hard_pass': bv.get('hard_pass', False),
             'budget_pass': bp.get('budget_pass') is True,
-            'overall_pass': bv.get('hard_pass', False),  # #3 fix: budget is advisory
+            'performance_valid': rs.get('performance_valid', False),
+            'overall_pass': bv.get('hard_pass', False) and (bp.get('budget_pass') is True) and rs.get('performance_valid', False),
             'l0': bv.get('L0_pass', False),
             'l1': bv.get('L1_pass', False),
             'l2_score': l2.get('semantic_score'),

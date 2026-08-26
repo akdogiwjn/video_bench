@@ -55,11 +55,11 @@ def filter_samples_by_window(csv_path: Path, window: dict | None) -> list[dict]:
     if not rows:
         return []
     if window is None:
-        return rows
+        return []  # #5 fix: fail-closed
     start = window.get("start_epoch")
     end = window.get("end_epoch")
     if start is None or end is None:
-        return rows
+        return []  # #5 fix: fail-closed
     filtered = []
     for row in rows:
         ts = float(row.get("timestamp", 0))
