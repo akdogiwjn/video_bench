@@ -18,10 +18,11 @@
 ## 从这里开始
 
 1. 复制 `config.env.example` 为 `config.env`，填入 API key。
-2. 构建 Docker 镜像：
+2. 构建 Docker 镜像（build context 为 video_bench 的上级目录）：
    ```bash
-   docker build -t video-bench-gen:1.0 -f image_build/videoclaw.Dockerfile /home/lcq/video_agent/
-   docker build -t video-bench-edit:1.0 -f image_build/openstoryline.Dockerfile /home/lcq/video_agent/
+   # 从 video_bench/ 的上级目录执行
+   docker build -t video-bench-gen:1.0 -f video_bench/image_build/videoclaw.Dockerfile .
+   docker build -t video-bench-edit:1.0 -f video_bench/image_build/openstoryline.Dockerfile .
    ```
 3. 执行用例：
    ```bash

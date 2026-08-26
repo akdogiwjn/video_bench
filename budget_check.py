@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Parse OpenClaw stderr.log + container.log to count API calls and check against budget.
 
+Status: advisory only. Budget results are reported but NOT included in overall_pass
+until RealLLMClient adds explicit api_calls.jsonl instrumentation for reliable counting.
+
 Fixes:
-- #4a: case_type "generate" maps to budget key "gen"
-- #4b: VLM calls counted (from VLM API patterns in stderr)
-- #4c: EDIT budget field names matched (max_tts_calls vs max_tts_api_calls)
-- #4d: budget_pass included in final hard_pass
+- case_type "generate" maps to budget key "gen"
+- VLM calls counted
+- EDIT budget field names matched (max_tts_calls vs max_tts_api_calls)
+- budget_pass reported in formal summary (advisory, not hard gate)
 """
 from __future__ import annotations
 
