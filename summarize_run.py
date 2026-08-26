@@ -122,8 +122,8 @@ def main():
     cpu_summary = compute_cpu_summary(run_dir / "container_cpu_samples.csv", task_window)
     resource_summary = compute_resource_summary(run_dir / "container_resource_samples.csv", task_window)
 
-    # #1 fix: performance data validity flag
-    perf_valid = cpu_summary.get("sample_count", 0) > 0 and resource_summary.get("sample_count", 0) > 0
+    # #1 fix: require minimum sample count for valid performance data
+    perf_valid = cpu_summary.get("sample_count", 0) >= 3 and resource_summary.get("sample_count", 0) >= 2
 
     task_duration = task_window.get("duration_seconds")
     # #8 fix: container_total_wall_time removed (runner no longer generates task_start/end_epoch.txt)

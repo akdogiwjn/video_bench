@@ -89,6 +89,7 @@ docker run --rm \
     -e DASHSCOPE_API_KEY="${DASHSCOPE_API_KEY}" \
     -e LLM_API_KEY="${LLM_API_KEY}" \
     -e VLM_API_KEY="${VLM_API_KEY}" \
+    -e TIMEOUT="${TIMEOUT}" \
     -e PYTHONPATH=/opt/openstoryline:/opt/openstoryline/src \
     -v /opt/openclaw:/opt/openclaw:ro \
     -v "${OPENCLAW_TEMP}:/root/.openclaw" \
@@ -113,23 +114,26 @@ from pathlib import Path
 r = subprocess.run(['docker', 'inspect', '--format', '{{.Id}}', '${IMAGE}'], capture_output=True, text=True)
 image_id = r.stdout.strip() if r.returncode == 0 else 'unknown'
 
-# Get OpenClaw version
+# Get OpenClaw version from host (mounted into container)
 r2 = subprocess.run(['openclaw', '--version'], capture_output=True, text=True)
 openclaw_version = r2.stdout.strip() if r2.returncode == 0 else 'unknown'
 
-# Fixture SHA
+# Fixture SHA — per-case, relative paths, full 64 hex
 fixture_dir = Path('${ROOT}/cases/${DIR}/fixtures')
 fixture_sha = hashlib.sha256()
 for f in sorted(fixture_dir.rglob('*')):
     if f.is_file():
+        rel = f.relative_to(fixture_dir).as_posix()
+        fixture_sha.update(rel.encode())
         fixture_sha.update(f.read_bytes())
-        fixture_sha.update(str(f).encode())
 
-# Skill SHA
+# Skill SHA — per-case skill only
+skill_name = 'video-generate' if '${CASE}' == 'generate' else 'video-edit'
+skill_dir = Path('${ROOT}/skills') / skill_name
 skill_sha = hashlib.sha256()
-skill_dir = Path('${ROOT}/skills')
-for f in sorted(skill_dir.rglob('SKILL.md')):
-    skill_sha.update(f.read_bytes())
+if skill_dir.exists():
+    for f in sorted(skill_dir.rglob('SKILL.md')):
+        skill_sha.update(f.read_bytes())
 
 metadata = {
     'benchmark_git_commit': subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True, cwd='${ROOT}').stdout.strip(),
@@ -141,8 +145,9 @@ metadata = {
     'memory': '${MEMORY}',
     'cpuset': '${CPUSET}',
     'case_id': '${CASE_ID}',
-    'fixture_sha256': fixture_sha.hexdigest()[:16] + '...',
-    'skill_sha256': skill_sha.hexdigest()[:16] + '...',
+    'fixture_sha256': fixture_sha.hexdigest(),
+    'skill_sha256': skill_sha.hexdigest(),
+    'skill_name': skill_name,
 }
 Path('${RUN_DIR}/run_metadata.json').write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
 " 2>/dev/null || true

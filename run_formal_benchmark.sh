@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-ROOT="/home/lcq/video_agent/video_bench"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${ROOT}/config.env"
 export DASHSCOPE_API_KEY DEEPSEEK_API_KEY LLM_API_KEY VLM_API_KEY
 
@@ -106,7 +106,7 @@ for d in sorted(r.iterdir()):
             'hard_pass': bv.get('hard_pass', False),
             'budget_pass': bp.get('budget_pass') is True,
             'performance_valid': rs.get('performance_valid', False),
-            'overall_pass': bv.get('hard_pass', False) and (bp.get('budget_pass') is True) and rs.get('performance_valid', False),
+            'overall_pass': bv.get('hard_pass', False) and rs.get('performance_valid', False),  # #2: budget advisory only until instrumentation is reliable
             'l0': bv.get('L0_pass', False),
             'l1': bv.get('L1_pass', False),
             'l2_score': l2.get('semantic_score'),
