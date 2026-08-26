@@ -105,12 +105,19 @@ for d in sorted(r.iterdir()):
             'case_id': case_dir.name,
             'hard_pass': bv.get('hard_pass', False),
             'budget_pass': bp.get('budget_pass') is True,
-            'overall_pass': bv.get('hard_pass', False) and (bp.get('budget_pass') is True),
+            'overall_pass': bv.get('hard_pass', False),  # #3 fix: budget is advisory
             'l0': bv.get('L0_pass', False),
             'l1': bv.get('L1_pass', False),
             'l2_score': l2.get('semantic_score'),
             'task_wall_s': tw.get('duration_seconds'),
             'task_cpu_time_s': rs.get('cpu_summary', {}).get('task_cpu_time_seconds'),
+            'avg_cpu_percent': rs.get('cpu_summary', {}).get('task_avg_cpu_percent'),
+            'peak_memory_bytes': rs.get('resource_summary', {}).get('task_peak_memory_bytes'),
+            'net_rx_bytes': rs.get('resource_summary', {}).get('task_net_rx_bytes'),
+            'net_tx_bytes': rs.get('resource_summary', {}).get('task_net_tx_bytes'),
+            'disk_read_bytes': rs.get('resource_summary', {}).get('task_disk_read_bytes'),
+            'disk_write_bytes': rs.get('resource_summary', {}).get('task_disk_write_bytes'),
+            'performance_valid': rs.get('performance_valid', False),
         })
 
 gen = [r for r in runs if 'GEN' in r['run']]

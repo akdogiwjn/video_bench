@@ -45,7 +45,7 @@ def parse_docker_bytes(s: str) -> float:
 
 
 def filter_samples_by_window(csv_path: Path, window: dict | None) -> list[dict]:
-    """Read CSV samples and keep only those within task_window."""
+    """Read CSV samples and keep only those within task_window. Fail-closed: no samples = empty list."""
     if not csv_path.exists():
         return []
     rows = []
@@ -65,7 +65,8 @@ def filter_samples_by_window(csv_path: Path, window: dict | None) -> list[dict]:
         ts = float(row.get("timestamp", 0))
         if start <= ts <= end:
             filtered.append(row)
-    return filtered if filtered else rows
+    # #1 fix: fail-closed — do NOT fallback to all rows if no samples in window
+    return filtered
 
 
 def compute_cpu_summary(csv_path: Path, window: dict | None) -> dict:
@@ -121,22 +122,23 @@ def main():
     cpu_summary = compute_cpu_summary(run_dir / "container_cpu_samples.csv", task_window)
     resource_summary = compute_resource_summary(run_dir / "container_resource_samples.csv", task_window)
 
+    # #1 fix: performance data validity flag
+    perf_valid = cpu_summary.get("sample_count", 0) > 0 and resource_summary.get("sample_count", 0) > 0
+
     task_duration = task_window.get("duration_seconds")
-    container_wall = safe_read_float(run_dir / "task_start_epoch.txt")
-    container_wall_end = safe_read_float(run_dir / "task_end_epoch.txt")
-    container_total = round(container_wall_end - container_wall, 3) if container_wall and container_wall_end else None
+    # #8 fix: container_total_wall_time removed (runner no longer generates task_start/end_epoch.txt)
 
     summary = {
         "case_id": args.case_id,
         "run_dir": str(run_dir),
         "task_wall_time_seconds": task_duration,
-        "container_total_wall_time_seconds": container_total,
         "exit_code": exit_code,
         "l0_pass": verification.get("L0_pass"),
         "l1_pass": verification.get("L1_pass"),
         "hard_pass": verification.get("hard_pass"),
         "cpu_summary": cpu_summary,
         "resource_summary": resource_summary,
+        "performance_valid": perf_valid,
     }
 
     out = run_dir / "run_summary.json"

@@ -569,5 +569,7 @@
       "path": "./web/static/user_guide.png",
       "sha256": "8baee7dfa46d658402102d71a893eccd0237d7f859e343175acb2e1cdac1d4b3"
     }
-  ]
+  ],
+  "transnetv2_weight_sha256": "834b10f25ae9e1b4e4f2652fe2843bd2b1388057a435d68b7c52635578fcc04d",
+  "transnetv2_weight_path": ".storyline/models/transnetv2-pytorch-weights.pth"
 }

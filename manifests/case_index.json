@@ -23,7 +23,7 @@
       "fixture": "cases/10_video_generate/fixtures/creative_brief.json",
       "prompt": "cases/10_video_generate/task.prompt",
       "prompt_sha256": "2918d193ed109f283f76ba1f7e2ec076630203f4864cd9a6f31750c0441a5928",
-      "prepare": "cases/10_video_generate/prepare.sh",
+      "prepare": "cases/10_video_generate/prepare.sh (standalone environment validation, not part of canonical execution)",
       "prepare_sha256": "93a36e71ea7e4b89bb2e5e7116603fc4526714d7175109e294f585f136db5ba5",
       "timeout_seconds": 2400,
       "formal_runs": 2,

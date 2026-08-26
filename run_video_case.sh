@@ -78,12 +78,17 @@ mkdir -p "${OPENCLAW_TEMP}"
 cp -a /root/.openclaw/* "${OPENCLAW_TEMP}/" 2>/dev/null || true
 rm -rf "${OPENCLAW_TEMP}/agents/main/sessions/" 2>/dev/null || true
 
-# #1 fix: set +e around docker run so cleanup/verifier/summarize always execute
+# Agent container — NO hidden GT mounted, NO verifier inside, isolated .openclaw
+# #2 fix: --env-file doesn't expand ${VAR}; pass keys explicitly after source
 set +e
 docker run --rm \
     --name "${CONTAINER_NAME}" \
     --cpus="${CPUS}" --memory="${MEMORY}" --cpuset-cpus="${CPUSET}" \
     --env-file "${ROOT}/config.env" \
+    -e DEEPSEEK_API_KEY="${DEEPSEEK_API_KEY}" \
+    -e DASHSCOPE_API_KEY="${DASHSCOPE_API_KEY}" \
+    -e LLM_API_KEY="${LLM_API_KEY}" \
+    -e VLM_API_KEY="${VLM_API_KEY}" \
     -e PYTHONPATH=/opt/openstoryline:/opt/openstoryline/src \
     -v /opt/openclaw:/opt/openclaw:ro \
     -v "${OPENCLAW_TEMP}:/root/.openclaw" \
@@ -98,6 +103,49 @@ DOCKER_RC=${PIPESTATUS[0]:-1}
 set -e
 
 echo "${DOCKER_RC}" > "${RUN_DIR}/exit_code.txt"
+
+# #5 fix: auto-generate run metadata
+python3 -c "
+import json, subprocess, hashlib
+from pathlib import Path
+
+# Get Docker image ID
+r = subprocess.run(['docker', 'inspect', '--format', '{{.Id}}', '${IMAGE}'], capture_output=True, text=True)
+image_id = r.stdout.strip() if r.returncode == 0 else 'unknown'
+
+# Get OpenClaw version
+r2 = subprocess.run(['openclaw', '--version'], capture_output=True, text=True)
+openclaw_version = r2.stdout.strip() if r2.returncode == 0 else 'unknown'
+
+# Fixture SHA
+fixture_dir = Path('${ROOT}/cases/${DIR}/fixtures')
+fixture_sha = hashlib.sha256()
+for f in sorted(fixture_dir.rglob('*')):
+    if f.is_file():
+        fixture_sha.update(f.read_bytes())
+        fixture_sha.update(str(f).encode())
+
+# Skill SHA
+skill_sha = hashlib.sha256()
+skill_dir = Path('${ROOT}/skills')
+for f in sorted(skill_dir.rglob('SKILL.md')):
+    skill_sha.update(f.read_bytes())
+
+metadata = {
+    'benchmark_git_commit': subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True, cwd='${ROOT}').stdout.strip(),
+    'docker_image_tag': '${IMAGE}',
+    'docker_image_id': image_id,
+    'openclaw_version': openclaw_version,
+    'agent_model': 'deepseek/deepseek-v4-flash',
+    'cpus': '${CPUS}',
+    'memory': '${MEMORY}',
+    'cpuset': '${CPUSET}',
+    'case_id': '${CASE_ID}',
+    'fixture_sha256': fixture_sha.hexdigest()[:16] + '...',
+    'skill_sha256': skill_sha.hexdigest()[:16] + '...',
+}
+Path('${RUN_DIR}/run_metadata.json').write_text(json.dumps(metadata, indent=2, ensure_ascii=False))
+" 2>/dev/null || true
 
 # Host-side verifier (#1: always runs, even on docker failure)
 echo "[INFO] running verifier on host..."

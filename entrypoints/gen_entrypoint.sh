@@ -74,6 +74,8 @@ find /opt/videoclaw/backend/code/result/image -name "*.png" -newer "${MARKER}" 2
 find /opt/videoclaw/backend/code/result/video -name "*.mp4" -newer "${MARKER}" 2>/dev/null | head -10 | while read f; do cp "$f" /workspace/output/video_clips/ 2>/dev/null; done
 FINAL_MP4=$(find /opt/videoclaw/backend/code/result -name "*.mp4" -newer "${MARKER}" -exec ls -S {} + 2>/dev/null | head -1)
 [ -n "${FINAL_MP4}" ] && [ -f "${FINAL_MP4}" ] && cp "${FINAL_MP4}" /workspace/output/final.mp4
+# #4 fix: record selection method for provenance
+echo "{\"selection_method\": \"fallback_largest_mp4\", \"source\": \"${FINAL_MP4}\"}" > /workspace/output/final_mp4_provenance.json 2>/dev/null || true
 echo "[INFO] outputs collected"
 
 kill ${BACKEND_PID} 2>/dev/null || true
